@@ -124,6 +124,11 @@
       const [selectedDoseTime, setSelectedDoseTime] = React.useState("");
       const [selectedMedicationId, setSelectedMedicationId] = React.useState(null);
 
+      // Função auxiliar para formatar números decimais (remover .0 quando for número inteiro)
+      const formatDose = (value) => {
+        return value % 1 === 0 ? value.toString() : value.toFixed(1);
+      };
+
       // Estilos inline para os componentes
       const styles = {
         container: {
@@ -296,24 +301,28 @@
         
         // Calcular próxima data
         let nextDue;
+        const now = new Date();
+        
         if (newMedication.customSchedule) {
           // Para programação personalizada, próxima dose depende do horário atual
-          const now = new Date();
           const hour = now.getHours();
           
           if (hour < 12 && newMedication.morningDose > 0) {
-            // Antes do meio-dia, próxima dose é de manhã
+            // Se for de manhã, próxima dose é em 12 horas
             nextDue = calculateNextDue(now, "", "morning");
-          } else if (hour < 20 && newMedication.eveningDose > 0) {
-            // Antes das 20h, próxima dose é de noite
+          } else if (newMedication.eveningDose > 0) {
+            // Se for de tarde/noite, próxima dose é em 12 horas
             nextDue = calculateNextDue(now, "", "evening");
           } else {
-            // Depois das 20h, próxima dose é amanhã de manhã
-            nextDue = calculateNextDue(now, "", "morning");
+            // Caso só tenha dose da manhã, agendar para a manhã do dia seguinte
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(8, 0, 0); // 8:00 AM
+            nextDue = tomorrow.toISOString();
           }
         } else {
           // Para programação padrão, usar frequência
-          nextDue = calculateNextDue(new Date(), newMedication.frequency);
+          nextDue = calculateNextDue(now, newMedication.frequency);
         }
         
         const medicationWithId = {
@@ -337,7 +346,7 @@
         });
         
         // Adicionar ao histórico
-        addToHistory(`Medicamento ${medicationWithId.name} adicionado com estoque inicial de ${medicationWithId.stock} unidades.`);
+        addToHistory(`Medicamento ${medicationWithId.name} adicionado com estoque inicial de ${formatDose(medicationWithId.stock)} unidades.`);
       };
       
       // Função para abrir o modal de tomar medicamento
@@ -367,10 +376,10 @@
             if (med.customSchedule && doseTime) {
               if (doseTime === "morning") {
                 doseAmount = med.morningDose;
-                doseDescription = ` (Dose da manhã: ${doseAmount} comprimido${doseAmount > 1 ? 's' : ''})`;
+                doseDescription = ` (Dose da manhã: ${formatDose(doseAmount)} comprimido${doseAmount !== 1 ? 's' : ''})`;
               } else if (doseTime === "evening") {
                 doseAmount = med.eveningDose;
-                doseDescription = ` (Dose da noite: ${doseAmount} comprimido${doseAmount > 1 ? 's' : ''})`;
+                doseDescription = ` (Dose da noite: ${formatDose(doseAmount)} comprimido${doseAmount !== 1 ? 's' : ''})`;
               }
             }
             
@@ -379,7 +388,7 @@
             const newStock = med.stock - doseAmount;
             
             // Adicionar ao histórico
-            addToHistory(`${med.name} foi tomado em ${formatDate(now)}${doseDescription}. Estoque restante: ${newStock} unidades.`);
+            addToHistory(`${med.name} foi tomado em ${formatDate(now)}${doseDescription}. Estoque restante: ${formatDose(newStock)} unidades.`);
             
             return {
               ...med,
@@ -403,7 +412,7 @@
       
       // Função para adicionar estoque de um medicamento
       const handleAddStock = () => {
-        const amountToAdd = parseInt(stockAmount);
+        const amountToAdd = parseFloat(stockAmount);
         
         if (isNaN(amountToAdd) || amountToAdd <= 0) {
           alert('Por favor, informe um número válido maior que zero.');
@@ -413,7 +422,7 @@
         setMedications(medications.map(med => {
           if (med.id === currentMedicationId) {
             const newStock = med.stock + amountToAdd;
-            addToHistory(`Adicionadas ${amountToAdd} unidades de ${med.name} ao estoque. Novo total: ${newStock} unidades.`);
+            addToHistory(`Adicionadas ${formatDose(amountToAdd)} unidades de ${med.name} ao estoque. Novo total: ${formatDose(newStock)} unidades.`);
             
             return {
               ...med,
@@ -455,40 +464,9 @@
         
         // Se for dose personalizada (manhã/noite)
         if (doseTime) {
-          const now = new Date();
-          const currentHour = now.getHours();
-          
-          // Se tomou a dose da manhã, a próxima será a da noite (do mesmo dia)
-          if (doseTime === "morning") {
-            // Verificar se tem dose da noite
-            const med = medications.find(m => m.id === selectedMedicationId);
-            if (med && med.eveningDose > 0) {
-              // Próxima dose é a da noite do mesmo dia
-              nextDate.setHours(20, 0, 0); // 20:00 (8 PM) para dose da noite
-              return nextDate.toISOString();
-            } else {
-              // Não tem dose da noite, então a próxima é a da manhã do dia seguinte
-              nextDate.setDate(nextDate.getDate() + 1);
-              nextDate.setHours(8, 0, 0); // 08:00 (8 AM) para dose da manhã
-              return nextDate.toISOString();
-            }
-          } 
-          // Se tomou a dose da noite, a próxima será a da manhã (do dia seguinte)
-          else if (doseTime === "evening") {
-            // Próxima dose é a da manhã do dia seguinte
-            nextDate.setDate(nextDate.getDate() + 1);
-            
-            // Verificar se tem dose da manhã
-            const med = medications.find(m => m.id === selectedMedicationId);
-            if (med && med.morningDose > 0) {
-              nextDate.setHours(8, 0, 0); // 08:00 (8 AM) para dose da manhã
-            } else if (med && med.eveningDose > 0) {
-              // Não tem dose da manhã, mas tem da noite, então a próxima é da noite do dia seguinte
-              nextDate.setHours(20, 0, 0); // 20:00 (8 PM) para dose da noite
-            }
-            
-            return nextDate.toISOString();
-          }
+          // Configurar próxima dose para exatamente 12 horas depois
+          nextDate.setHours(nextDate.getHours() + 12);
+          return nextDate.toISOString();
         }
         
         // Cálculo normal para frequências padrão
@@ -646,7 +624,7 @@
                   </div>
                 ) : (
                   <div style={{border: '1px solid var(--primary-light)', borderRadius: '5px', padding: '10px', marginBottom: '15px'}}>
-                    <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária</p>
+                    <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária (a cada 12 horas)</p>
                     
                     <div>
                       <label htmlFor="morningDose">Dose da Manhã (comprimidos)</label>
@@ -655,8 +633,9 @@
                         type="number"
                         style={styles.input}
                         value={newMedication.morningDose}
-                        onChange={(e) => setNewMedication({...newMedication, morningDose: parseInt(e.target.value) || 0})}
+                        onChange={(e) => setNewMedication({...newMedication, morningDose: parseFloat(e.target.value) || 0})}
                         min="0"
+                        step="0.5"
                       />
                     </div>
                     
@@ -667,8 +646,9 @@
                         type="number"
                         style={styles.input}
                         value={newMedication.eveningDose}
-                        onChange={(e) => setNewMedication({...newMedication, eveningDose: parseInt(e.target.value) || 0})}
+                        onChange={(e) => setNewMedication({...newMedication, eveningDose: parseFloat(e.target.value) || 0})}
                         min="0"
+                        step="0.5"
                       />
                     </div>
                   </div>
@@ -681,8 +661,9 @@
                     type="number"
                     style={styles.input}
                     value={newMedication.stock}
-                    onChange={(e) => setNewMedication({...newMedication, stock: parseInt(e.target.value) || 0})}
-                    min="1"
+                    onChange={(e) => setNewMedication({...newMedication, stock: parseFloat(e.target.value) || 0})}
+                    min="0.5"
+                    step="0.5"
                     required
                   />
                 </div>
@@ -694,8 +675,9 @@
                     type="number"
                     style={styles.input}
                     value={newMedication.alertThreshold}
-                    onChange={(e) => setNewMedication({...newMedication, alertThreshold: parseInt(e.target.value) || 0})}
-                    min="1"
+                    onChange={(e) => setNewMedication({...newMedication, alertThreshold: parseFloat(e.target.value) || 0})}
+                    min="0.5"
+                    step="0.5"
                   />
                 </div>
                 
@@ -718,15 +700,15 @@
                     
                     {medication.customSchedule ? (
                       <div style={styles.dosageSchedule}>
-                        <p><strong>Programação Personalizada:</strong></p>
+                        <p><strong>Programação Personalizada (a cada 12 horas):</strong></p>
                         {medication.morningDose > 0 && (
                           <div style={styles.dosageTime}>
-                            Manhã: {medication.morningDose} comprimido{medication.morningDose > 1 ? 's' : ''}
+                            Manhã: {formatDose(medication.morningDose)} comprimido{medication.morningDose !== 1 ? 's' : ''}
                           </div>
                         )}
                         {medication.eveningDose > 0 && (
                           <div style={styles.dosageTime}>
-                            Noite: {medication.eveningDose} comprimido{medication.eveningDose > 1 ? 's' : ''}
+                            Noite: {formatDose(medication.eveningDose)} comprimido{medication.eveningDose !== 1 ? 's' : ''}
                           </div>
                         )}
                       </div>
@@ -737,7 +719,7 @@
                     <p>
                       <strong>Estoque:</strong> 
                       <span style={isLowStock(medication) ? styles.lowStock : {}}>
-                        {medication.stock} unidades
+                        {formatDose(medication.stock)} unidades
                         {isLowStock(medication) && ' (Estoque Baixo)'}
                       </span>
                     </p>
@@ -814,7 +796,8 @@
                     value={stockAmount}
                     onChange={(e) => setStockAmount(e.target.value)}
                     placeholder="Digite a quantidade"
-                    min="1"
+                    min="0.5"
+                    step="0.5"
                     autoFocus
                   />
                 </div>
