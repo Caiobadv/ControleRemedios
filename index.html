@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Medicamentos</title>
+  <meta name="description" content="Aplicativo para controle de medicamentos - acompanhe doses, estoque e histórico">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
+
+  <!-- Carregando React, React-DOM e Babel para funcionamento do app -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Estilos CSS -->
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #f8f8ff; /* Fundo levemente lilás */
+      font-family: Arial, sans-serif;
+    }
+    
+    @media (max-width: 600px) {
+      /* Estilos responsivos para mobile */
+      #root {
+        padding: 10px;
+      }
+    }
+
+    /* Paleta de cores personalizada */
+    :root {
+      --primary: #6a0dad; /* Roxo principal */
+      --primary-light: #9370db; /* Lilás médio */
+      --primary-lighter: #e6e6fa; /* Lavanda claro */
+      --white: #ffffff;
+      --danger: #ff1493; /* Rosa escuro */
+      --warning: #9932cc; /* Roxo médio */
+    }
+    
+    /* Estilos do modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      background-color: var(--white);
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-header {
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: var(--primary);
+      border-bottom: 1px solid var(--primary-lighter);
+      padding-bottom: 10px;
+    }
+    
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    
+    /* Animações */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .fadeIn {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <!-- Elemento raiz para o React renderizar o aplicativo -->
+  <div id="root"></div>
+  
+  <!-- Script da aplicação -->
+  <script type="text/babel">
+    // Aplicação React para controle de medicamentos
+    function App() {
+      // Estados para armazenar os dados
+      const [medications, setMedications] = React.useState([]);
+      const [history, setHistory] = React.useState([]);
+      const [newMedication, setNewMedication] = React.useState({
+        name: '',
+        dosage: '',
+        frequency: '',
+        stock: 0,
+        alertThreshold: 5,
+        lastTaken: null,
+        nextDue: null,
+        customSchedule: false,
+        morningDose: 0,
+        eveningDose: 0,
+      });
+      const [activeTab, setActiveTab] = React.useState('medicines');
+      
+      // Estado para o modal de adicionar estoque
+      const [showStockModal, setShowStockModal] = React.useState(false);
+      const [stockAmount, setStockAmount] = React.useState("");
+      const [currentMedicationId, setCurrentMedicationId] = React.useState(null);
+      
+      // Estados para o modal de registro de dose
+      const [showDoseModal, setShowDoseModal] = React.useState(false);
+      const [selectedDoseTime, setSelectedDoseTime] = React.useState("");
+      const [selectedMedicationId, setSelectedMedicationId] = React.useState(null);
+
+      // Estilos inline para os componentes
+      const styles = {
+        container: {
+          maxWidth: '800px',
+          margin: '0 auto',
+          padding: '20px',
+          fontFamily: 'Arial, sans-serif',
+        },
+        header: {
+          textAlign: 'center',
+          marginBottom: '30px',
+          color: 'var(--primary)',
+        },
+        form: {
+          marginBottom: '20px',
+          padding: '15px',
+          backgroundColor: 'var(--primary-lighter)',
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        },
+        input: {
+          width: '100%',
+          padding: '10px',
+          margin: '5px 0',
+          borderRadius: '4px',
+          border: '1px solid #ddd',
+          fontSize: '16px',
+        },
+        button: {
+          padding: '10px 15px',
+          backgroundColor: 'var(--primary)',
+          color: 'var(--white)',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          margin: '5px 5px 5px 0',
+          fontSize: '14px',
+          transition: 'background-color 0.3s',
+        },
+        dangerButton: {
+          backgroundColor: 'var(--danger)',
+        },
+        warningButton: {
+          backgroundColor: 'var(--warning)',
+        },
+        disabledButton: {
+          opacity: 0.6,
+          cursor: 'not-allowed',
+        },
+        medicationCard: {
+          border: '1px solid var(--primary-light)',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '15px',
+          backgroundColor: 'var(--white)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        },
+        lowStock: {
+          color: 'var(--danger)',
+          fontWeight: 'bold',
+        },
+        tabs: {
+          display: 'flex',
+          marginBottom: '20px',
+        },
+        tab: {
+          padding: '12px 20px',
+          backgroundColor: 'var(--primary-lighter)',
+          cursor: 'pointer',
+          borderRadius: '5px 5px 0 0',
+          marginRight: '5px',
+          transition: 'background-color 0.3s',
+        },
+        activeTab: {
+          backgroundColor: 'var(--primary)',
+          color: 'var(--white)',
+        },
+        medicineList: {
+          marginBottom: '20px',
+        },
+        historyItem: {
+          padding: '12px',
+          borderBottom: '1px solid var(--primary-lighter)',
+        },
+        dosageSchedule: {
+          marginTop: '10px',
+          padding: '10px',
+          backgroundColor: 'var(--primary-lighter)',
+          borderRadius: '4px',
+        },
+        dosageTime: {
+          display: 'inline-block',
+          margin: '5px 10px 5px 0',
+          padding: '5px 10px',
+          backgroundColor: 'var(--primary-light)',
+          color: 'white',
+          borderRadius: '4px',
+        },
+        modalButton: {
+          padding: '8px 16px',
+          backgroundColor: 'var(--primary)',
+          color: 'var(--white)',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+        },
+        modalCancelButton: {
+          backgroundColor: '#aaa',
+        },
+        doseTimeButton: {
+          padding: '10px 15px',
+          margin: '5px',
+          backgroundColor: 'var(--primary-lighter)',
+          border: '1px solid var(--primary-light)',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          width: 'calc(50% - 10px)',
+          textAlign: 'center',
+        },
+        selectedDoseTimeButton: {
+          backgroundColor: 'var(--primary)',
+          color: 'var(--white)',
+        },
+      };
+
+      // Carregar dados do localStorage ao iniciar
+      React.useEffect(() => {
+        const savedMedications = localStorage.getItem('medications');
+        const savedHistory = localStorage.getItem('medicationHistory');
+        
+        if (savedMedications) {
+          setMedications(JSON.parse(savedMedications));
+        }
+        
+        if (savedHistory) {
+          setHistory(JSON.parse(savedHistory));
+        }
+      }, []);
+
+      // Salvar dados no localStorage quando há mudanças
+      React.useEffect(() => {
+        localStorage.setItem('medications', JSON.stringify(medications));
+      }, [medications]);
+
+      React.useEffect(() => {
+        localStorage.setItem('medicationHistory', JSON.stringify(history));
+      }, [history]);
+
+      // Função para adicionar um novo medicamento
+      const handleAddMedication = (e) => {
+        e.preventDefault();
+        
+        // Validar campos obrigatórios
+        if (!newMedication.name || !newMedication.dosage || newMedication.stock <= 0) {
+          alert('Por favor, preencha todos os campos obrigatórios.');
+          return;
+        }
+        
+        // Validar programação personalizada
+        if (newMedication.customSchedule) {
+          if (newMedication.morningDose <= 0 && newMedication.eveningDose <= 0) {
+            alert('Por favor, especifique pelo menos uma dose para o período da manhã ou da noite.');
+            return;
+          }
+        } else if (!newMedication.frequency) {
+          // Frequência é obrigatória apenas para programação padrão
+          alert('Por favor, especifique a frequência do medicamento.');
+          return;
+        }
+        
+        // Calcular próxima data
+        let nextDue;
+        if (newMedication.customSchedule) {
+          // Para programação personalizada, próxima dose depende do horário atual
+          const now = new Date();
+          const hour = now.getHours();
+          
+          if (hour < 12 && newMedication.morningDose > 0) {
+            // Antes do meio-dia, próxima dose é de manhã
+            nextDue = calculateNextDue(now, "", "morning");
+          } else if (hour < 20 && newMedication.eveningDose > 0) {
+            // Antes das 20h, próxima dose é de noite
+            nextDue = calculateNextDue(now, "", "evening");
+          } else {
+            // Depois das 20h, próxima dose é amanhã de manhã
+            nextDue = calculateNextDue(now, "", "morning");
+          }
+        } else {
+          // Para programação padrão, usar frequência
+          nextDue = calculateNextDue(new Date(), newMedication.frequency);
+        }
+        
+        const medicationWithId = {
+          ...newMedication,
+          id: Date.now().toString(),
+          nextDue,
+        };
+        
+        setMedications([...medications, medicationWithId]);
+        setNewMedication({
+          name: '',
+          dosage: '',
+          frequency: '',
+          stock: 0,
+          alertThreshold: 5,
+          lastTaken: null,
+          nextDue: null,
+          customSchedule: false,
+          morningDose: 0,
+          eveningDose: 0,
+        });
+        
+        // Adicionar ao histórico
+        addToHistory(`Medicamento ${medicationWithId.name} adicionado com estoque inicial de ${medicationWithId.stock} unidades.`);
+      };
+      
+      // Função para abrir o modal de tomar medicamento
+      const openTakeMedicationModal = (id) => {
+        const medication = medications.find(med => med.id === id);
+        setSelectedMedicationId(id);
+        
+        if (medication.customSchedule) {
+          setShowDoseModal(true);
+          setSelectedDoseTime("");
+        } else {
+          // Para medicamentos com programação normal, registrar diretamente
+          handleTakeMedication(id);
+        }
+      };
+      
+      // Função para registrar a tomada de um medicamento
+      const handleTakeMedication = (id, doseTime = null) => {
+        const now = new Date();
+        
+        setMedications(medications.map(med => {
+          if (med.id === id) {
+            let doseAmount = 1; // Dose padrão
+            let doseDescription = "";
+            
+            // Se for programação personalizada e um horário foi selecionado
+            if (med.customSchedule && doseTime) {
+              if (doseTime === "morning") {
+                doseAmount = med.morningDose;
+                doseDescription = ` (Dose da manhã: ${doseAmount} comprimido${doseAmount > 1 ? 's' : ''})`;
+              } else if (doseTime === "evening") {
+                doseAmount = med.eveningDose;
+                doseDescription = ` (Dose da noite: ${doseAmount} comprimido${doseAmount > 1 ? 's' : ''})`;
+              }
+            }
+            
+            // Calcular próxima data com base na frequência
+            const nextDue = calculateNextDue(now, med.frequency, doseTime);
+            const newStock = med.stock - doseAmount;
+            
+            // Adicionar ao histórico
+            addToHistory(`${med.name} foi tomado em ${formatDate(now)}${doseDescription}. Estoque restante: ${newStock} unidades.`);
+            
+            return {
+              ...med,
+              lastTaken: now.toISOString(),
+              nextDue,
+              stock: newStock,
+            };
+          }
+          return med;
+        }));
+        
+        setShowDoseModal(false);
+      };
+      
+      // Função para abrir o modal de adicionar estoque
+      const openAddStockModal = (id) => {
+        setCurrentMedicationId(id);
+        setStockAmount("");
+        setShowStockModal(true);
+      };
+      
+      // Função para adicionar estoque de um medicamento
+      const handleAddStock = () => {
+        const amountToAdd = parseInt(stockAmount);
+        
+        if (isNaN(amountToAdd) || amountToAdd <= 0) {
+          alert('Por favor, informe um número válido maior que zero.');
+          return;
+        }
+        
+        setMedications(medications.map(med => {
+          if (med.id === currentMedicationId) {
+            const newStock = med.stock + amountToAdd;
+            addToHistory(`Adicionadas ${amountToAdd} unidades de ${med.name} ao estoque. Novo total: ${newStock} unidades.`);
+            
+            return {
+              ...med,
+              stock: newStock,
+            };
+          }
+          return med;
+        }));
+        
+        setShowStockModal(false);
+        setCurrentMedicationId(null);
+      };
+
+      // Função para remover um medicamento
+      const handleRemoveMedication = (id) => {
+        const medicationToRemove = medications.find(med => med.id === id);
+        if (!medicationToRemove) return;
+        
+        if (window.confirm(`Tem certeza que deseja remover ${medicationToRemove.name} da lista?`)) {
+          setMedications(medications.filter(med => med.id !== id));
+          addToHistory(`Medicamento ${medicationToRemove.name} foi removido da lista.`);
+        }
+      };
+
+      // Função para adicionar eventos ao histórico
+      const addToHistory = (message) => {
+        const historyItem = {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          message,
+        };
+        
+        setHistory([historyItem, ...history]);
+      };
+
+      // Função para calcular a próxima data com base na frequência
+      const calculateNextDue = (date, frequency, doseTime = null) => {
+        const nextDate = new Date(date);
+        
+        // Se for dose personalizada (manhã/noite)
+        if (doseTime) {
+          const now = new Date();
+          const currentHour = now.getHours();
+          
+          // Se tomou a dose da manhã, a próxima será a da noite (do mesmo dia)
+          if (doseTime === "morning") {
+            // Verificar se tem dose da noite
+            const med = medications.find(m => m.id === selectedMedicationId);
+            if (med && med.eveningDose > 0) {
+              // Próxima dose é a da noite do mesmo dia
+              nextDate.setHours(20, 0, 0); // 20:00 (8 PM) para dose da noite
+              return nextDate.toISOString();
+            } else {
+              // Não tem dose da noite, então a próxima é a da manhã do dia seguinte
+              nextDate.setDate(nextDate.getDate() + 1);
+              nextDate.setHours(8, 0, 0); // 08:00 (8 AM) para dose da manhã
+              return nextDate.toISOString();
+            }
+          } 
+          // Se tomou a dose da noite, a próxima será a da manhã (do dia seguinte)
+          else if (doseTime === "evening") {
+            // Próxima dose é a da manhã do dia seguinte
+            nextDate.setDate(nextDate.getDate() + 1);
+            
+            // Verificar se tem dose da manhã
+            const med = medications.find(m => m.id === selectedMedicationId);
+            if (med && med.morningDose > 0) {
+              nextDate.setHours(8, 0, 0); // 08:00 (8 AM) para dose da manhã
+            } else if (med && med.eveningDose > 0) {
+              // Não tem dose da manhã, mas tem da noite, então a próxima é da noite do dia seguinte
+              nextDate.setHours(20, 0, 0); // 20:00 (8 PM) para dose da noite
+            }
+            
+            return nextDate.toISOString();
+          }
+        }
+        
+        // Cálculo normal para frequências padrão
+        if (frequency.includes('hora')) {
+          const hours = parseInt(frequency.match(/\d+/)[0]);
+          nextDate.setHours(nextDate.getHours() + hours);
+        } else if (frequency.includes('dia')) {
+          const days = parseInt(frequency.match(/\d+/)[0]);
+          nextDate.setDate(nextDate.getDate() + days);
+        } else if (frequency.includes('semana')) {
+          const weeks = parseInt(frequency.match(/\d+/)[0]);
+          nextDate.setDate(nextDate.getDate() + (weeks * 7));
+        } else if (frequency.includes('mês')) {
+          const months = parseInt(frequency.match(/\d+/)[0]);
+          nextDate.setMonth(nextDate.getMonth() + months);
+        }
+        
+        return nextDate.toISOString();
+      };
+
+      // Função auxiliar para formatar datas
+      const formatDate = (date) => {
+        if (!date) return 'Nunca';
+        
+        if (typeof date === 'string') {
+          date = new Date(date);
+        }
+        
+        return new Intl.DateTimeFormat('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(date);
+      };
+
+      // Verificar se um medicamento está com estoque baixo
+      const isLowStock = (medication) => {
+        return medication.stock <= medication.alertThreshold;
+      };
+
+      // Verificar se um medicamento está atrasado para ser tomado
+      const isOverdue = (medication) => {
+        if (!medication.nextDue) return false;
+        
+        const now = new Date();
+        const nextDue = new Date(medication.nextDue);
+        
+        return nextDue < now;
+      };
+
+      // Ordenar medicamentos (atrasados primeiro, depois com estoque baixo)
+      const sortedMedications = [...medications].sort((a, b) => {
+        if (isOverdue(a) && !isOverdue(b)) return -1;
+        if (!isOverdue(a) && isOverdue(b)) return 1;
+        if (isLowStock(a) && !isLowStock(b)) return -1;
+        if (!isLowStock(a) && isLowStock(b)) return 1;
+        return 0;
+      });
+
+      return (
+        <div style={styles.container}>
+          <div style={styles.header}>
+            <h1>Controle de Medicamentos</h1>
+          </div>
+          
+          <div style={styles.tabs}>
+            <div 
+              style={{...styles.tab, ...(activeTab === 'medicines' ? styles.activeTab : {})}} 
+              onClick={() => setActiveTab('medicines')}
+            >
+              Medicamentos
+            </div>
+            <div 
+              style={{...styles.tab, ...(activeTab === 'add' ? styles.activeTab : {})}} 
+              onClick={() => setActiveTab('add')}
+            >
+              Adicionar Novo
+            </div>
+            <div 
+              style={{...styles.tab, ...(activeTab === 'history' ? styles.activeTab : {})}} 
+              onClick={() => setActiveTab('history')}
+            >
+              Histórico
+            </div>
+          </div>
+          
+          {activeTab === 'add' && (
+            <div style={styles.form}>
+              <h2>Adicionar Novo Medicamento</h2>
+              <form onSubmit={handleAddMedication}>
+                <div>
+                  <label htmlFor="name">Nome do Medicamento</label>
+                  <input
+                    id="name"
+                    type="text"
+                    style={styles.input}
+                    value={newMedication.name}
+                    onChange={(e) => setNewMedication({...newMedication, name: e.target.value})}
+                    placeholder="Ex: Paracetamol"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="dosage">Dosagem</label>
+                  <input
+                    id="dosage"
+                    type="text"
+                    style={styles.input}
+                    value={newMedication.dosage}
+                    onChange={(e) => setNewMedication({...newMedication, dosage: e.target.value})}
+                    placeholder="Ex: 500mg, 1 comprimido"
+                    required
+                  />
+                </div>
+                
+                <div style={{marginTop: '15px', marginBottom: '15px'}}>
+                  <label style={{fontWeight: 'bold'}}>Tipo de Programação</label>
+                  <div style={{display: 'flex', marginTop: '8px', gap: '10px'}}>
+                    <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                      <input
+                        type="radio"
+                        name="scheduleType"
+                        checked={!newMedication.customSchedule}
+                        onChange={() => setNewMedication({...newMedication, customSchedule: false})}
+                      />
+                      <span style={{marginLeft: '8px'}}>Padrão (frequência regular)</span>
+                    </label>
+                    <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                      <input
+                        type="radio"
+                        name="scheduleType"
+                        checked={newMedication.customSchedule}
+                        onChange={() => setNewMedication({...newMedication, customSchedule: true})}
+                      />
+                      <span style={{marginLeft: '8px'}}>Personalizado (manhã/noite)</span>
+                    </label>
+                  </div>
+                </div>
+                
+                {!newMedication.customSchedule ? (
+                  <div>
+                    <label htmlFor="frequency">Frequência</label>
+                    <input
+                      id="frequency"
+                      type="text"
+                      style={styles.input}
+                      value={newMedication.frequency}
+                      onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
+                      placeholder="Ex: 8 horas, 1 dia, 1 semana"
+                      required={!newMedication.customSchedule}
+                    />
+                  </div>
+                ) : (
+                  <div style={{border: '1px solid var(--primary-light)', borderRadius: '5px', padding: '10px', marginBottom: '15px'}}>
+                    <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária</p>
+                    
+                    <div>
+                      <label htmlFor="morningDose">Dose da Manhã (comprimidos)</label>
+                      <input
+                        id="morningDose"
+                        type="number"
+                        style={styles.input}
+                        value={newMedication.morningDose}
+                        onChange={(e) => setNewMedication({...newMedication, morningDose: parseInt(e.target.value) || 0})}
+                        min="0"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="eveningDose">Dose da Noite (comprimidos)</label>
+                      <input
+                        id="eveningDose"
+                        type="number"
+                        style={styles.input}
+                        value={newMedication.eveningDose}
+                        onChange={(e) => setNewMedication({...newMedication, eveningDose: parseInt(e.target.value) || 0})}
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div>
+                  <label htmlFor="stock">Estoque Inicial</label>
+                  <input
+                    id="stock"
+                    type="number"
+                    style={styles.input}
+                    value={newMedication.stock}
+                    onChange={(e) => setNewMedication({...newMedication, stock: parseInt(e.target.value) || 0})}
+                    min="1"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="alertThreshold">Alerta de Estoque Baixo</label>
+                  <input
+                    id="alertThreshold"
+                    type="number"
+                    style={styles.input}
+                    value={newMedication.alertThreshold}
+                    onChange={(e) => setNewMedication({...newMedication, alertThreshold: parseInt(e.target.value) || 0})}
+                    min="1"
+                  />
+                </div>
+                
+                <button type="submit" style={styles.button}>Adicionar Medicamento</button>
+              </form>
+            </div>
+          )}
+          
+          {activeTab === 'medicines' && (
+            <div style={styles.medicineList}>
+              <h2>Lista de Medicamentos</h2>
+              
+              {sortedMedications.length === 0 ? (
+                <p>Nenhum medicamento cadastrado. Use a aba "Adicionar Novo" para cadastrar medicamentos.</p>
+              ) : (
+                sortedMedications.map(medication => (
+                  <div key={medication.id} style={styles.medicationCard}>
+                    <h3>{medication.name}</h3>
+                    <p><strong>Dosagem:</strong> {medication.dosage}</p>
+                    
+                    {medication.customSchedule ? (
+                      <div style={styles.dosageSchedule}>
+                        <p><strong>Programação Personalizada:</strong></p>
+                        {medication.morningDose > 0 && (
+                          <div style={styles.dosageTime}>
+                            Manhã: {medication.morningDose} comprimido{medication.morningDose > 1 ? 's' : ''}
+                          </div>
+                        )}
+                        {medication.eveningDose > 0 && (
+                          <div style={styles.dosageTime}>
+                            Noite: {medication.eveningDose} comprimido{medication.eveningDose > 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p><strong>Frequência:</strong> {medication.frequency}</p>
+                    )}
+                    
+                    <p>
+                      <strong>Estoque:</strong> 
+                      <span style={isLowStock(medication) ? styles.lowStock : {}}>
+                        {medication.stock} unidades
+                        {isLowStock(medication) && ' (Estoque Baixo)'}
+                      </span>
+                    </p>
+                    <p><strong>Última vez tomado:</strong> {formatDate(medication.lastTaken)}</p>
+                    <p>
+                      <strong>Próxima dose prevista:</strong> 
+                      <span style={isOverdue(medication) ? styles.lowStock : {}}>
+                        {formatDate(medication.nextDue)}
+                        {isOverdue(medication) && ' (Atrasado)'}
+                      </span>
+                    </p>
+                    
+                    <div>
+                      <button 
+                        style={{
+                          ...styles.button,
+                          ...(medication.stock <= 0 ? styles.disabledButton : {})
+                        }} 
+                        onClick={() => openTakeMedicationModal(medication.id)}
+                        disabled={medication.stock <= 0}
+                      >
+                        Registrar Dose
+                      </button>
+                      
+                      <button 
+                        style={{...styles.button, ...styles.warningButton}} 
+                        onClick={() => openAddStockModal(medication.id)}
+                      >
+                        Adicionar Estoque
+                      </button>
+                      
+                      <button 
+                        style={{...styles.button, ...styles.dangerButton}} 
+                        onClick={() => handleRemoveMedication(medication.id)}
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          
+          {activeTab === 'history' && (
+            <div>
+              <h2>Histórico de Atividades</h2>
+              
+              {history.length === 0 ? (
+                <p>Nenhuma atividade registrada.</p>
+              ) : (
+                history.map(item => (
+                  <div key={item.id} style={styles.historyItem}>
+                    <strong>{formatDate(item.date)}:</strong> {item.message}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          
+          {/* Modal para adicionar estoque */}
+          {showStockModal && (
+            <div className="modal-backdrop fadeIn">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>Adicionar Estoque</h3>
+                </div>
+                <div>
+                  <label htmlFor="stockAmount">Quantidade a adicionar:</label>
+                  <input
+                    id="stockAmount"
+                    type="number"
+                    style={styles.input}
+                    value={stockAmount}
+                    onChange={(e) => setStockAmount(e.target.value)}
+                    placeholder="Digite a quantidade"
+                    min="1"
+                    autoFocus
+                  />
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
+                    onClick={() => setShowStockModal(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    style={styles.modalButton} 
+                    onClick={handleAddStock}
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Modal para seleção de dose (manhã/noite) */}
+          {showDoseModal && (
+            <div className="modal-backdrop fadeIn">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>Registrar Dose</h3>
+                </div>
+                <div>
+                  <p>Selecione o horário da dose:</p>
+                  <div style={{display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap'}}>
+                    <div
+                      style={{
+                        ...styles.doseTimeButton,
+                        ...(selectedDoseTime === 'morning' ? styles.selectedDoseTimeButton : {})
+                      }}
+                      onClick={() => setSelectedDoseTime('morning')}
+                    >
+                      Dose da Manhã
+                    </div>
+                    <div
+                      style={{
+                        ...styles.doseTimeButton,
+                        ...(selectedDoseTime === 'evening' ? styles.selectedDoseTimeButton : {})
+                      }}
+                      onClick={() => setSelectedDoseTime('evening')}
+                    >
+                      Dose da Noite
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
+                    onClick={() => setShowDoseModal(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    style={{
+                      ...styles.modalButton,
+                      ...(selectedDoseTime === '' ? styles.disabledButton : {})
+                    }} 
+                    onClick={() => handleTakeMedication(selectedMedicationId, selectedDoseTime)}
+                    disabled={selectedDoseTime === ''}
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Renderizar o App no elemento root
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
