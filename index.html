@@ -38,6 +38,7 @@
       --white: #ffffff;
       --danger: #ff1493; /* Rosa escuro */
       --warning: #9932cc; /* Roxo médio */
+      --success: #32CD32; /* Verde para mensagens de sucesso */
     }
     
     /* Estilos do modal */
@@ -76,6 +77,25 @@
       justify-content: flex-end;
       margin-top: 20px;
       gap: 10px;
+    }
+    
+    /* Estilo para mensagens de notificação */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 8px;
+      background-color: var(--success);
+      color: white;
+      z-index: 1001;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      transition: opacity 0.5s ease-in-out;
+      opacity: 0;
+    }
+    
+    .notification.show {
+      opacity: 1;
     }
     
     /* Animações */
@@ -127,6 +147,16 @@
       
       // Estado para o modal de confirmação de limpar histórico
       const [showClearHistoryModal, setShowClearHistoryModal] = React.useState(false);
+      
+      // NOVOS ESTADOS para editar medicamento
+      const [showEditModal, setShowEditModal] = React.useState(false);
+      const [editingMedication, setEditingMedication] = React.useState(null);
+      
+      // NOVO ESTADO para notificações
+      const [notification, setNotification] = React.useState({
+        show: false,
+        message: ''
+      });
 
       // Função auxiliar para formatar números decimais (remover .0 quando for número inteiro)
       const formatDose = (value) => {
@@ -220,6 +250,8 @@
           return 'Remove';
         } else if (message.includes('limpo')) {
           return 'Clear';
+        } else if (message.includes('editado')) {
+          return 'Edit';
         }
         return 'Other';
       };
@@ -232,6 +264,7 @@
           case 'Stock': return '📦';
           case 'Remove': return '🗑️';
           case 'Clear': return '🧹';
+          case 'Edit': return '✏️';
           default: return '📝';
         }
       };
@@ -246,7 +279,8 @@
           .replace(/Medicamento (.+) adicionado com estoque inicial de (.+) unidades\./, 'Adicionado $1 ao sistema com $2 unidades.')
           .replace(/(.+) foi tomado em (.+) \(Dose da (.+): (.+) comprimidos?\)/, '$1 - Dose da $3: $4 comprimido(s)')
           .replace(/(.+) foi tomado em (.+)\./, 'Tomou $1')
-          .replace(/Adicionadas (.+) unidades de (.+) ao estoque\. Novo total: (.+) unidades\./, 'Estoque de $2 atualizado para $3 (+$1)');
+          .replace(/Adicionadas (.+) unidades de (.+) ao estoque\. Novo total: (.+) unidades\./, 'Estoque de $2 atualizado para $3 (+$1)')
+          .replace(/Medicamento (.+) foi editado\./, 'Informações de $1 atualizadas.');
           
         return formattedMessage;
       };
@@ -295,6 +329,9 @@
         },
         warningButton: {
           backgroundColor: 'var(--warning)',
+        },
+        editButton: {
+          backgroundColor: '#4682B4',
         },
         disabledButton: {
           opacity: 0.6,
@@ -452,6 +489,10 @@
           backgroundColor: '#f3e5f5',
           color: '#9c27b0',
         },
+        historyIconEdit: {
+          backgroundColor: '#e1f5fe',
+          color: '#03a9f4',
+        },
         historyIconOther: {
           backgroundColor: '#f5f5f5',
           color: '#607d8b',
@@ -489,6 +530,31 @@
           marginLeft: '5px',
           fontSize: '14px',
         },
+        // Estilos para a notificação
+        notification: {
+          padding: '10px 15px',
+          backgroundColor: 'var(--success)',
+          color: 'white',
+          borderRadius: '4px',
+          marginBottom: '15px',
+          fontWeight: 'bold',
+        },
+      };
+
+      // NOVA FUNÇÃO para mostrar notificações temporárias
+      const showNotification = (message) => {
+        setNotification({
+          show: true,
+          message
+        });
+        
+        // Esconder a notificação após 3 segundos
+        setTimeout(() => {
+          setNotification({
+            show: false,
+            message: ''
+          });
+        }, 3000);
       };
 
       // Carregar dados do localStorage ao iniciar
@@ -603,6 +669,59 @@
         
         // Adicionar ao histórico
         addToHistory(`Medicamento ${medicationWithId.name} adicionado com estoque inicial de ${formatDose(medicationWithId.stock)} unidades.`);
+        
+        // Mostrar notificação de sucesso
+        showNotification(`${medicationWithId.name} adicionado com sucesso!`);
+        
+        // Mudar para a aba de medicamentos
+        setActiveTab('medicines');
+      };
+      
+      // NOVA FUNÇÃO para abrir o modal de edição
+      const openEditModal = (id) => {
+        const medicationToEdit = medications.find(med => med.id === id);
+        if (!medicationToEdit) return;
+        
+        setEditingMedication({...medicationToEdit});
+        setShowEditModal(true);
+      };
+      
+      // NOVA FUNÇÃO para salvar as alterações na edição
+      const handleSaveEdit = () => {
+        // Validar campos obrigatórios
+        if (!editingMedication.name || !editingMedication.dosage) {
+          alert('Por favor, preencha todos os campos obrigatórios.');
+          return;
+        }
+        
+        // Validar programação personalizada
+        if (editingMedication.customSchedule) {
+          if (editingMedication.morningDose <= 0 && editingMedication.eveningDose <= 0) {
+            alert('Por favor, especifique pelo menos uma dose para o período da manhã ou da noite.');
+            return;
+          }
+        } else if (!editingMedication.frequency) {
+          // Frequência é obrigatória apenas para programação padrão
+          alert('Por favor, especifique a frequência do medicamento.');
+          return;
+        }
+        
+        // Atualizar a lista de medicamentos
+        setMedications(medications.map(med => {
+          if (med.id === editingMedication.id) {
+            return editingMedication;
+          }
+          return med;
+        }));
+        
+        // Adicionar ao histórico
+        addToHistory(`Medicamento ${editingMedication.name} foi editado.`);
+        
+        // Mostrar notificação
+        showNotification(`${editingMedication.name} atualizado com sucesso!`);
+        
+        // Fechar o modal
+        setShowEditModal(false);
       };
       
       // Função para abrir o modal de tomar medicamento
@@ -652,6 +771,9 @@
             // Adicionar ao histórico usando o horário informado
             addToHistory(`${med.name} foi tomado em ${formatDate(now)}${doseDescription}. Estoque restante: ${formatDose(newStock)} unidades.`);
             
+            // Mostrar notificação
+            showNotification(`Dose de ${med.name} registrada!`);
+            
             return {
               ...med,
               lastTaken: now.toISOString(), // Usar o horário informado como último horário de tomada
@@ -687,6 +809,9 @@
             const newStock = med.stock + amountToAdd;
             addToHistory(`Adicionadas ${formatDose(amountToAdd)} unidades de ${med.name} ao estoque. Novo total: ${formatDose(newStock)} unidades.`);
             
+            // Mostrar notificação
+            showNotification(`Estoque de ${med.name} atualizado!`);
+            
             return {
               ...med,
               stock: newStock,
@@ -707,6 +832,9 @@
         if (window.confirm(`Tem certeza que deseja remover ${medicationToRemove.name} da lista?`)) {
           setMedications(medications.filter(med => med.id !== id));
           addToHistory(`Medicamento ${medicationToRemove.name} foi removido da lista.`);
+          
+          // Mostrar notificação
+          showNotification(`${medicationToRemove.name} removido da lista.`);
         }
       };
 
@@ -793,6 +921,13 @@
 
       return (
         <div style={styles.container}>
+          {/* Notificação */}
+          {notification.show && (
+            <div className={`notification ${notification.show ? 'show' : ''}`}>
+              {notification.message}
+            </div>
+          )}
+          
           <div style={styles.header}>
             <h1>Controle de Medicamentos</h1>
           </div>
@@ -1014,6 +1149,14 @@
                         Adicionar Estoque
                       </button>
                       
+                      {/* Novo botão de Editar */}
+                      <button 
+                        style={{...styles.button, ...styles.editButton}} 
+                        onClick={() => openEditModal(medication.id)}
+                      >
+                        Editar
+                      </button>
+                      
                       <button 
                         style={{...styles.button, ...styles.dangerButton}} 
                         onClick={() => handleRemoveMedication(medication.id)}
@@ -1064,6 +1207,10 @@
                   <div style={styles.legendItem}>
                     <span style={{...styles.historyIcon, ...styles.historyIconClear}}>🧹</span>
                     <span style={styles.legendText}>Histórico limpo</span>
+                  </div>
+                  <div style={styles.legendItem}>
+                    <span style={{...styles.historyIcon, ...styles.historyIconEdit}}>✏️</span>
+                    <span style={styles.legendText}>Medicamento editado</span>
                   </div>
                 </div>
               </div>
@@ -1239,6 +1386,140 @@
                     onClick={handleClearHistory}
                   >
                     Limpar Histórico
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* NOVO Modal para editar medicamento */}
+          {showEditModal && editingMedication && (
+            <div className="modal-backdrop fadeIn">
+              <div className="modal-content" style={{maxWidth: '500px'}}>
+                <div className="modal-header">
+                  <h3>Editar Medicamento</h3>
+                </div>
+                <div>
+                  <div>
+                    <label htmlFor="editName">Nome do Medicamento</label>
+                    <input
+                      id="editName"
+                      type="text"
+                      style={styles.input}
+                      value={editingMedication.name}
+                      onChange={(e) => setEditingMedication({...editingMedication, name: e.target.value})}
+                      placeholder="Ex: Paracetamol"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="editDosage">Dosagem</label>
+                    <input
+                      id="editDosage"
+                      type="text"
+                      style={styles.input}
+                      value={editingMedication.dosage}
+                      onChange={(e) => setEditingMedication({...editingMedication, dosage: e.target.value})}
+                      placeholder="Ex: 500mg, 1 comprimido"
+                      required
+                    />
+                  </div>
+                  
+                  <div style={{marginTop: '15px', marginBottom: '15px'}}>
+                    <label style={{fontWeight: 'bold'}}>Tipo de Programação</label>
+                    <div style={{display: 'flex', marginTop: '8px', gap: '10px'}}>
+                      <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                        <input
+                          type="radio"
+                          name="editScheduleType"
+                          checked={!editingMedication.customSchedule}
+                          onChange={() => setEditingMedication({...editingMedication, customSchedule: false})}
+                        />
+                        <span style={{marginLeft: '8px'}}>Padrão (frequência regular)</span>
+                      </label>
+                      <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                        <input
+                          type="radio"
+                          name="editScheduleType"
+                          checked={editingMedication.customSchedule}
+                          onChange={() => setEditingMedication({...editingMedication, customSchedule: true})}
+                        />
+                        <span style={{marginLeft: '8px'}}>Personalizado (manhã/noite)</span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {!editingMedication.customSchedule ? (
+                    <div>
+                      <label htmlFor="editFrequency">Frequência</label>
+                      <input
+                        id="editFrequency"
+                        type="text"
+                        style={styles.input}
+                        value={editingMedication.frequency}
+                        onChange={(e) => setEditingMedication({...editingMedication, frequency: e.target.value})}
+                        placeholder="Ex: 8 horas, 1 dia, 1 semana"
+                        required={!editingMedication.customSchedule}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{border: '1px solid var(--primary-light)', borderRadius: '5px', padding: '10px', marginBottom: '15px'}}>
+                      <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária (a cada 12 horas)</p>
+                      
+                      <div>
+                        <label htmlFor="editMorningDose">Dose da Manhã (comprimidos)</label>
+                        <input
+                          id="editMorningDose"
+                          type="number"
+                          style={styles.input}
+                          value={editingMedication.morningDose}
+                          onChange={(e) => setEditingMedication({...editingMedication, morningDose: parseFloat(e.target.value) || 0})}
+                          min="0"
+                          step="0.5"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="editEveningDose">Dose da Noite (comprimidos)</label>
+                        <input
+                          id="editEveningDose"
+                          type="number"
+                          style={styles.input}
+                          value={editingMedication.eveningDose}
+                          onChange={(e) => setEditingMedication({...editingMedication, eveningDose: parseFloat(e.target.value) || 0})}
+                          min="0"
+                          step="0.5"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label htmlFor="editAlertThreshold">Alerta de Estoque Baixo</label>
+                    <input
+                      id="editAlertThreshold"
+                      type="number"
+                      style={styles.input}
+                      value={editingMedication.alertThreshold}
+                      onChange={(e) => setEditingMedication({...editingMedication, alertThreshold: parseFloat(e.target.value) || 0})}
+                      min="0.5"
+                      step="0.5"
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button 
+                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    style={styles.modalButton} 
+                    onClick={handleSaveEdit}
+                  >
+                    Salvar Alterações
                   </button>
                 </div>
               </div>
