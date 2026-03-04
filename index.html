@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Controle de Medicamentos</title>
   <meta name="description" content="Aplicativo para controle de medicamentos - acompanhe doses, estoque e histórico">
+
+  <meta name="theme-color" content="#6a0dad">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icon-192.svg">
+
   
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
@@ -41,6 +46,43 @@
       --success: #32CD32; /* Verde para mensagens de sucesso */
     }
     
+
+    /* Melhorias visuais */
+    * { box-sizing: border-box; }
+    body {
+      background: radial-gradient(1200px 600px at 20% 0%, rgba(106,13,173,0.10), transparent 60%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(147,112,219,0.14), transparent 55%),
+                  #f8f8ff;
+      color: #1f1f28;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    a { color: inherit; }
+    .notification {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      background: rgba(50,205,50,0.95);
+      color: #fff;
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      transform: translateY(-10px);
+      opacity: 0;
+      transition: all .22s ease;
+      z-index: 1200;
+      max-width: min(92vw, 360px);
+      font-weight: 600;
+    }
+    .notification.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .modal-content {
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.22);
+    }
+
     /* Estilos do modal */
     .modal-backdrop {
       position: fixed;
@@ -115,6 +157,15 @@
   
   <!-- Script da aplicação -->
   <script type="text/babel">
+    // Registrar Service Worker (PWA)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {
+          // Se falhar, o app continua funcionando normalmente.
+        });
+      });
+    }
+
     // Aplicação React para controle de medicamentos
     function App() {
       // Estados para armazenar os dados
@@ -158,7 +209,45 @@
         message: ''
       });
 
-      // Função auxiliar para formatar números decimais (remover .0 quando for número inteiro)
+      
+
+// Notificações do navegador (lembretes)
+const [remindersEnabled, setRemindersEnabled] = React.useState(() => {
+  try { return localStorage.getItem('remindersEnabled') === 'true'; } catch { return false; }
+});
+const [notificationPermission, setNotificationPermission] = React.useState(() => {
+  return ('Notification' in window) ? Notification.permission : 'unsupported';
+});
+
+// PWA install prompt (principalmente Android/Chrome)
+const [canInstall, setCanInstall] = React.useState(false);
+const [showInstallHelp, setShowInstallHelp] = React.useState(false);
+const [showNotifHelp, setShowNotifHelp] = React.useState(false);
+const deferredPromptRef = React.useRef(null);
+
+React.useEffect(() => {
+  const handler = (e) => {
+    e.preventDefault();
+    deferredPromptRef.current = e;
+    setCanInstall(true);
+  };
+  window.addEventListener('beforeinstallprompt', handler);
+  return () => window.removeEventListener('beforeinstallprompt', handler);
+}, []);
+
+const handleInstallClick = async () => {
+  const dp = deferredPromptRef.current;
+  if (!dp) {
+    setShowInstallHelp(true);
+    return;
+  }
+  dp.prompt();
+  try { await dp.userChoice; } catch (e) {}
+  deferredPromptRef.current = null;
+  setCanInstall(false);
+};
+const medsRef = React.useRef([]);
+// Função auxiliar para formatar números decimais (remover .0 quando for número inteiro)
       const formatDose = (value) => {
         return value % 1 === 0 ? value.toString() : value.toFixed(1);
       };
@@ -294,10 +383,28 @@
           fontFamily: 'Arial, sans-serif',
         },
         header: {
-          textAlign: 'center',
-          marginBottom: '30px',
-          color: 'var(--primary)',
-        },
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '12px',
+  marginBottom: '20px',
+  color: 'var(--primary)',
+  flexWrap: 'wrap',
+},
+headerTitleArea: {
+  minWidth: '220px',
+},
+headerActions: {
+  display: 'flex',
+  gap: '10px',
+  flexWrap: 'wrap',
+  justifyContent: 'flex-end',
+},
+smallButton: {
+  padding: '8px 12px',
+  fontSize: '13px',
+},
+
         form: {
           marginBottom: '20px',
           padding: '15px',
@@ -557,7 +664,214 @@
         }, 3000);
       };
 
-      // Carregar dados do localStorage ao iniciar
+      
+
+// Guardar meds em ref para o "timer" não depender do estado no intervalo
+React.useEffect(() => {
+  medsRef.current = medications;
+}, [medications]);
+
+const toggleReminders = async () => {
+  if (!('Notification' in window)) {
+    showNotification('Seu navegador não suporta notificações.');
+    return;
+  }
+
+  // Desativar
+  if (remindersEnabled) {
+    setRemindersEnabled(false);
+    try { localStorage.setItem('remindersEnabled', 'false'); } catch (e) {}
+    showNotification('Notificações desativadas.');
+    return;
+  }
+
+  // Ativar
+  const perm = await Notification.requestPermission();
+  setNotificationPermission(perm);
+
+  if (perm === 'granted') {
+    setRemindersEnabled(true);
+    try { localStorage.setItem('remindersEnabled', 'true'); } catch (e) {}
+    showNotification('Notificações ativadas ✅');
+  } else {
+    showNotification('Permissão de notificações negada.');
+    setShowNotifHelp(true);
+  }
+};
+
+// Notificação de teste (para validar permissões)
+const testNotification = () => {
+  if (!('Notification' in window)) {
+    showNotification('Seu navegador não suporta notificações.');
+    return;
+  }
+  if (Notification.permission !== 'granted') {
+    showNotification('Permissão não liberada. Abra a ajuda para liberar.');
+    setShowNotifHelp(true);
+    return;
+  }
+  try {
+    new Notification('Teste de lembrete 💊', {
+      body: 'Se você viu isso, tá funcionando ✅',
+      icon: '/icon-192.svg'
+    });
+    showNotification('Teste enviado ✅');
+  } catch (e) {
+    showNotification('Não consegui disparar o teste aqui.');
+  }
+};
+
+
+// Checar doses "vencidas agora" e disparar lembrete (enquanto o app estiver aberto)
+React.useEffect(() => {
+  if (!remindersEnabled) return;
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+
+  const checkDue = () => {
+    const now = new Date();
+    const meds = medsRef.current || [];
+
+    meds.forEach((m) => {
+      if (!m.nextDue) return;
+
+      const due = new Date(m.nextDue);
+      const diff = now - due;
+
+      // janela de 1 minuto após o horário da dose
+      const shouldNotify = diff >= 0 && diff < 60 * 1000;
+      if (!shouldNotify) return;
+
+      if (m.lastNotified === m.nextDue) return;
+
+      // Atualizar marca de notificação para não repetir
+      setMedications(prev =>
+        prev.map(pm => pm.id === m.id ? { ...pm, lastNotified: m.nextDue } : pm)
+      );
+
+      // Toast interno
+      showNotification(`Hora do remédio: ${m.name} (${m.dosage})`);
+
+      // Notificação do navegador
+      try {
+        new Notification('Hora do remédio 💊', {
+          body: `${m.name} — ${m.dosage}`,
+          icon: '/icon-192.svg'
+        });
+      } catch (e) {
+        // silencioso
+      }
+    });
+  };
+
+  checkDue();
+  const id = setInterval(checkDue, 30 * 1000);
+  return () => clearInterval(id);
+}, [remindersEnabled]);
+
+// Exportar lembretes para o Calendário do celular (.ics) — funciona mesmo com o site fechado
+const downloadCalendarIcs = () => {
+  const meds = medications || [];
+  const now = new Date();
+  const horizon = new Date(now);
+  horizon.setDate(horizon.getDate() + 30);
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const fmtICS = (d) => (
+    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`
+  );
+
+  const parseFrequencyToMinutes = (med) => {
+    if (med.customSchedule) return 12 * 60; // 12h fixo (manhã/noite)
+    if (!med.frequency) return null;
+
+    const f = med.frequency.toLowerCase();
+    const numMatch = f.match(/\d+/);
+    const n = numMatch ? parseInt(numMatch[0], 10) : null;
+    if (!n) return null;
+
+    if (f.includes('hora')) return n * 60;
+    if (f.includes('dia')) return n * 24 * 60;
+    if (f.includes('semana')) return n * 7 * 24 * 60;
+    if (f.includes('mês') || f.includes('mes')) return n * 30 * 24 * 60; // aproximação
+    return null;
+  };
+
+  let events = '';
+  let total = 0;
+
+  meds.forEach((m) => {
+    if (!m.nextDue) return;
+
+    const intervalMin = parseFrequencyToMinutes(m);
+    if (!intervalMin) return;
+
+    let d = new Date(m.nextDue);
+
+    // Se já passou muito, começar "agora" arredondando para o próximo intervalo
+    if (d < now) d = new Date(now);
+
+    // Gerar ocorrências até 30 dias (limite de segurança)
+    let guard = 0;
+    while (d <= horizon && guard < 500 && total < 800) {
+      const dtStart = new Date(d);
+      const dtEnd = new Date(d);
+      dtEnd.setMinutes(dtEnd.getMinutes() + 5);
+
+      const uid = `${m.id}-${dtStart.getTime()}@controle-remedios`;
+      const summary = `Tomar ${m.name} (${m.dosage})`;
+
+      events += [
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${fmtICS(now)}`,
+        `DTSTART:${fmtICS(dtStart)}`,
+        `DTEND:${fmtICS(dtEnd)}`,
+        `SUMMARY:${summary}`,
+        `DESCRIPTION:Hora do remédio — ${m.name} (${m.dosage}).`,
+        'BEGIN:VALARM',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Lembrete de medicamento',
+        'TRIGGER:-PT10M',
+        'END:VALARM',
+        'END:VEVENT'
+      ].join('\r\n') + '\r\n';
+
+      total += 1;
+      guard += 1;
+
+      d = new Date(d.getTime() + intervalMin * 60 * 1000);
+    }
+  });
+
+  if (!events) {
+    showNotification('Não encontrei horários (próxima dose) para exportar.');
+    return;
+  }
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//ControleRemedios//PT-BR//',
+    'CALSCALE:GREGORIAN',
+    events.trim(),
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lembretes-medicamentos.ics';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+
+  showNotification('Arquivo de calendário gerado ✅ (importe no celular).');
+};
+// Carregar dados do localStorage ao iniciar
       React.useEffect(() => {
         const savedMedications = localStorage.getItem('medications');
         const savedHistory = localStorage.getItem('medicationHistory');
@@ -651,6 +965,7 @@
           ...newMedication,
           id: Date.now().toString(),
           nextDue,
+          lastNotified: null,
         };
         
         setMedications([...medications, medicationWithId]);
@@ -927,10 +1242,99 @@
               {notification.message}
             </div>
           )}
+
+
+          {/* Ajuda: instalar como app */}
+          {showInstallHelp && (
+            <div className="modal-backdrop" role="dialog" aria-modal="true">
+              <div className="modal-content">
+                <h3 style={{marginTop: 0}}>Instalar como app (PWA)</h3>
+                <p style={{marginTop: 6}}>
+                  Em alguns navegadores (principalmente iPhone/Safari) não aparece um botão de “instalar”.
+                  Você instala pelo menu do navegador:
+                </p>
+                <ul style={{lineHeight: 1.5}}>
+                  <li><b>iPhone (Safari)</b>: botão <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b></li>
+                  <li><b>Android (Chrome)</b>: menu <b>⋮</b> → <b>Instalar app</b> / <b>Adicionar à tela inicial</b></li>
+                  <li><b>Computador</b>: procure o ícone de instalação na barra de endereço (quando disponível)</li>
+                </ul>
+                <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop: 16}}>
+                  <button style={{...styles.button}} onClick={() => setShowInstallHelp(false)}>Fechar</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Ajuda: liberar notificações */}
+          {showNotifHelp && (
+            <div className="modal-backdrop" role="dialog" aria-modal="true">
+              <div className="modal-content">
+                <h3 style={{marginTop: 0}}>Como liberar notificações</h3>
+                <p style={{marginTop: 6}}>
+                  A permissão está como <b>negada</b>. Para permitir:
+                </p>
+                <ul style={{lineHeight: 1.5}}>
+                  <li><b>Chrome</b>: clique no <b>cadeado</b> ao lado do endereço → <b>Notificações</b> → <b>Permitir</b></li>
+                  <li><b>Safari (Mac)</b>: Ajustes do Safari → <b>Websites</b> → <b>Notificações</b> → permitir para este site</li>
+                  <li><b>iPhone</b>: as notificações funcionam melhor se o app estiver <b>instalado</b> na Tela de Início</li>
+                </ul>
+                <p style={{marginTop: 10}}>
+                  Depois, atualize a página e clique em <b>Ativar lembretes</b> novamente.
+                </p>
+                <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop: 16}}>
+                  <button style={{...styles.button, backgroundColor:'var(--primary-light)'}} onClick={() => { setShowNotifHelp(false); setShowInstallHelp(true); }}>Ver como instalar</button>
+                  <button style={{...styles.button}} onClick={() => setShowNotifHelp(false)}>Fechar</button>
+                </div>
+              </div>
+            </div>
+          )}
           
           <div style={styles.header}>
-            <h1>Controle de Medicamentos</h1>
-          </div>
+  <div style={styles.headerTitleArea}>
+    <h1 style={{margin: 0}}>Controle de Medicamentos</h1>
+    <p style={{margin: '6px 0 0 0', fontSize: '13px', color: '#6a0dad'}}>
+      Dica: instale como app (PWA) e ative lembretes.
+    </p>
+  </div>
+
+  <div style={styles.headerActions}>
+    <button
+      type="button"
+      style={{...styles.button, ...styles.smallButton}}
+      onClick={toggleReminders}
+      title="Ativa lembretes enquanto o app estiver aberto"
+    >
+      {remindersEnabled ? '🔕 Desativar lembretes' : '🔔 Ativar lembretes'}
+    </button>
+
+    <button
+      type="button"
+      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--white)', color: 'var(--primary)', border: '1px solid rgba(106,13,173,0.35)'}}
+      onClick={handleInstallClick}
+      title="Instalar como app (PWA)"
+    >
+      📲 Instalar app
+    </button>
+
+    <button
+      type="button"
+      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--white)', color: 'var(--primary)', border: '1px solid rgba(106,13,173,0.35)'}}
+      onClick={testNotification}
+      title="Dispara uma notificação de teste"
+    >
+      🧪 Testar
+    </button>
+
+    <button
+      type="button"
+      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--primary-light)'}}
+      onClick={downloadCalendarIcs}
+      title="Gera um arquivo .ics para importar no calendário do celular"
+    >
+      📅 Exportar calendário
+    </button>
+  </div>
+</div>
           
           <div style={styles.tabs}>
             <div 

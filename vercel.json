@@ -1,9 +1,13 @@
 {
   "version": 2,
   "builds": [
-    { "src": "*.html", "use": "@vercel/static" }
+    { "src": "**/*", "use": "@vercel/static" }
   ],
   "routes": [
+    { "src": "/service-worker\\.js", "dest": "/service-worker.js" },
+    { "src": "/manifest\\.json", "dest": "/manifest.json" },
+    { "src": "/icon-192\\.svg", "dest": "/icon-192.svg" },
+    { "src": "/icon-512\\.svg", "dest": "/icon-512.svg" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
