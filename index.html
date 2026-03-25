@@ -3,1937 +3,1020 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Controle de Medicamentos</title>
-  <meta name="description" content="Aplicativo para controle de medicamentos - acompanhe doses, estoque e histórico">
-
-  <meta name="theme-color" content="#6a0dad">
+  <title>Remédios da Livia ✨</title>
+  <meta name="description" content="Controle de medicamentos da Livia">
+  <meta name="theme-color" content="#080012">
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon-192.svg">
-
-  
-  <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
 
-  <!-- Carregando React, React-DOM e Babel para funcionamento do app -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Estilos CSS -->
   <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #f8f8ff; /* Fundo levemente lilás */
-      font-family: Arial, sans-serif;
-    }
-    
-    @media (max-width: 600px) {
-      /* Estilos responsivos para mobile */
-      #root {
-        padding: 10px;
-      }
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Paleta de cores personalizada */
     :root {
-      --primary: #6a0dad; /* Roxo principal */
-      --primary-light: #9370db; /* Lilás médio */
-      --primary-lighter: #e6e6fa; /* Lavanda claro */
-      --white: #ffffff;
-      --danger: #ff1493; /* Rosa escuro */
-      --warning: #9932cc; /* Roxo médio */
-      --success: #32CD32; /* Verde para mensagens de sucesso */
+      --bg: #080012;
+      --surface: rgba(22, 4, 42, 0.88);
+      --surface2: rgba(38, 8, 62, 0.92);
+      --primary: #c084fc;
+      --primary-dark: #a855f7;
+      --pink: #f472b6;
+      --pink-dark: #ec4899;
+      --fuchsia: #e879f9;
+      --gold: #fbbf24;
+      --indigo: #818cf8;
+      --text: #f3e8ff;
+      --text-muted: rgba(243,232,255,0.55);
+      --border: rgba(192,132,252,0.14);
+      --border-pink: rgba(244,114,182,0.3);
     }
-    
 
-    /* Melhorias visuais */
-    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
     body {
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(106,13,173,0.10), transparent 60%),
-                  radial-gradient(900px 500px at 90% 10%, rgba(147,112,219,0.14), transparent 55%),
-                  #f8f8ff;
-      color: #1f1f28;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-    a { color: inherit; }
-    .notification {
-      position: fixed;
-      top: 18px;
-      right: 18px;
-      background: rgba(50,205,50,0.95);
-      color: #fff;
-      padding: 12px 14px;
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-      transform: translateY(-10px);
-      opacity: 0;
-      transition: all .22s ease;
-      z-index: 1200;
-      max-width: min(92vw, 360px);
-      font-weight: 600;
-    }
-    .notification.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-    .modal-content {
-      border-radius: 16px;
-      box-shadow: 0 18px 50px rgba(0,0,0,0.22);
+      background-image:
+        radial-gradient(ellipse 900px 450px at 15% -5%, rgba(168,85,247,0.13) 0%, transparent 60%),
+        radial-gradient(ellipse 700px 350px at 88% 12%, rgba(244,114,182,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse 600px 600px at 50% 110%, rgba(120,0,160,0.08) 0%, transparent 60%);
+      min-height: 100vh;
     }
 
-    /* Estilos do modal */
-    .modal-backdrop {
+    body::before {
+      content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
+      inset: 0;
+      background-image:
+        radial-gradient(1.5px 1.5px at 18% 28%, rgba(244,114,182,0.65) 0%, transparent 100%),
+        radial-gradient(1px 1px at 78% 8%, rgba(192,132,252,0.55) 0%, transparent 100%),
+        radial-gradient(2px 2px at 44% 62%, rgba(232,121,249,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 68% 82%, rgba(244,114,182,0.45) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 9% 72%, rgba(192,132,252,0.45) 0%, transparent 100%),
+        radial-gradient(2px 2px at 91% 48%, rgba(251,191,36,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 33% 18%, rgba(244,114,182,0.35) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 58% 42%, rgba(192,132,252,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 72%, rgba(244,114,182,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25% 90%, rgba(232,121,249,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
     }
-    
-    .modal-content {
-      background-color: var(--white);
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 400px;
+
+    #root { position: relative; z-index: 1; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.25); border-radius: 3px; }
+
+    /* Glass card */
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .glass-pink { border-color: var(--border-pink); box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(244,114,182,0.08), inset 0 1px 0 rgba(255,255,255,0.04); }
+
+    /* Buttons */
+    .btn { border: none; border-radius: 10px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s ease; }
+    .btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary-dark), var(--pink-dark)); color: #fff; box-shadow: 0 4px 14px rgba(168,85,247,0.32); }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(168,85,247,0.45); }
+    .btn-secondary { background: rgba(192,132,252,0.09); color: var(--primary); border: 1px solid var(--border) !important; }
+    .btn-secondary:hover { background: rgba(192,132,252,0.18); }
+    .btn-danger { background: linear-gradient(135deg, #ec4899, #be185d); color: #fff; }
+    .btn-danger:hover { transform: translateY(-1px); }
+    .btn-warning { background: linear-gradient(135deg, #e879f9, #a21caf); color: #fff; }
+    .btn-warning:hover { transform: translateY(-1px); }
+    .btn-edit { background: linear-gradient(135deg, #818cf8, #4f46e5); color: #fff; }
+    .btn-edit:hover { transform: translateY(-1px); }
+
+    /* Inputs */
+    .inp {
       width: 100%;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-top: 5px;
     }
-    
-    .modal-header {
-      margin-bottom: 15px;
-      font-weight: bold;
-      color: var(--primary);
-      border-bottom: 1px solid var(--primary-lighter);
-      padding-bottom: 10px;
+    .inp:focus { border-color: rgba(192,132,252,0.5); box-shadow: 0 0 0 3px rgba(192,132,252,0.1); }
+    .inp::placeholder { color: rgba(243,232,255,0.25); }
+    .inp[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.75) sepia(1) hue-rotate(240deg); }
+    .inp[type="number"]::-webkit-inner-spin-button { filter: invert(0.6); }
+    .inp option { background: #1a0030; color: var(--text); }
+
+    .lbl { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.03em; margin-bottom: 2px; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 20px; right: 20px;
+      background: linear-gradient(135deg, rgba(168,85,247,0.96), rgba(236,72,153,0.96));
+      color: #fff; padding: 13px 18px; border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(168,85,247,0.4);
+      transform: translateX(130%); opacity: 0;
+      transition: all 0.38s cubic-bezier(0.34,1.56,0.64,1);
+      z-index: 9999; max-width: min(92vw,340px);
+      font-weight: 600; font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.13);
     }
-    
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 20px;
-      gap: 10px;
+    .toast.show { transform: translateX(0); opacity: 1; }
+
+    /* Modal */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+      animation: fadeBg 0.2s ease;
     }
-    
-    /* Estilo para mensagens de notificação */
-    .notification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 15px 20px;
-      border-radius: 8px;
-      background-color: var(--success);
-      color: white;
-      z-index: 1001;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      transition: opacity 0.5s ease-in-out;
-      opacity: 0;
+    @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+    .modal-box {
+      background: linear-gradient(145deg, rgba(18,4,36,0.99), rgba(28,4,52,0.99));
+      border: 1px solid rgba(192,132,252,0.18);
+      border-radius: 20px; padding: 26px;
+      max-width: 460px; width: 100%;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      max-height: 90vh; overflow-y: auto;
     }
-    
-    .notification.show {
-      opacity: 1;
+    @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Tabs */
+    .tab-bar { display: flex; background: rgba(255,255,255,0.025); border: 1px solid var(--border); border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 24px; }
+    .tab { flex: 1; padding: 10px 10px; text-align: center; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); transition: all 0.2s ease; white-space: nowrap; }
+    .tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .tab.on { background: linear-gradient(135deg, var(--primary-dark), var(--pink-dark)); color: #fff; box-shadow: 0 4px 14px rgba(168,85,247,0.32); font-weight: 600; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+    .badge-era { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); color: var(--gold); }
+    .badge-streak { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); color: var(--gold); }
+    .badge-overdue { background: rgba(244,114,182,0.13); border: 1px solid rgba(244,114,182,0.28); color: var(--pink); }
+    .badge-low { background: rgba(232,121,249,0.13); border: 1px solid rgba(232,121,249,0.28); color: var(--fuchsia); }
+
+    /* Gradient text */
+    .grad { background: linear-gradient(135deg, var(--primary), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Sparkle */
+    @keyframes sparkleAnim { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 60% { transform: scale(1.3) rotate(180deg); opacity: 1; } 100% { transform: scale(0) rotate(360deg); opacity: 0; } }
+    .sparkle { position: fixed; pointer-events: none; font-size: 22px; animation: sparkleAnim 0.9s ease-out forwards; z-index: 9998; }
+
+    /* Progress */
+    .prog-track { height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-top: 5px; }
+    .prog-fill { height: 100%; background: linear-gradient(90deg, var(--primary-dark), var(--pink)); border-radius: 3px; transition: width 0.6s ease; }
+
+    /* Info grid */
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; padding: 12px; background: rgba(255,255,255,0.025); border-radius: 10px; border: 1px solid var(--border); margin-bottom: 14px; }
+    .info-item { font-size: 13px; }
+    .info-label { color: var(--text-muted); margin-right: 4px; }
+
+    /* Fade in */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+    /* Radio pill */
+    .radio-pill { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; color: var(--text-muted); transition: all 0.2s; user-select: none; }
+    .radio-pill.on { border-color: rgba(192,132,252,0.5); background: rgba(192,132,252,0.1); color: var(--primary); font-weight: 600; }
+
+    /* Dose button */
+    .dose-btn { flex: 1; padding: 14px 12px; border-radius: 12px; border: 2px solid var(--border); background: rgba(255,255,255,0.025); color: var(--text-muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 14px; transition: all 0.2s; }
+    .dose-btn.on { border-color: var(--primary); background: rgba(192,132,252,0.13); color: var(--primary); font-weight: 600; }
+
+    /* Mobile */
+    @media (max-width: 540px) {
+      .modal-box { padding: 18px; border-radius: 16px; }
+      .tab { font-size: 11px; padding: 8px 5px; }
+      .info-grid { grid-template-columns: 1fr 1fr; }
     }
-    
-    /* Animações */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    .fadeIn {
-      animation: fadeIn 0.3s ease-in-out;
-    }
+
+    /* History item */
+    .hist-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px 16px; }
+    .hist-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+    .hist-time { font-size: 11px; color: var(--text-muted); min-width: 38px; padding-top: 2px; }
+    .hist-icon { font-size: 17px; min-width: 22px; text-align: center; }
+    .hist-msg { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; }
+
+    /* Empty state */
+    .empty { padding: 44px 24px; text-align: center; }
+    .empty-icon { font-size: 46px; margin-bottom: 14px; }
+    .empty-title { font-family: 'Playfair Display', serif; color: var(--primary); font-size: 18px; margin-bottom: 8px; }
+    .empty-sub { color: var(--text-muted); font-size: 14px; }
+
+    /* Divider */
+    hr.div { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+
+    /* Banner */
+    .banner { background: rgba(244,114,182,0.07); border: 1px solid rgba(244,114,182,0.18); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; }
   </style>
 </head>
 <body>
-  <!-- Elemento raiz para o React renderizar o aplicativo -->
-  <div id="root"></div>
-  
-  <!-- Script da aplicação -->
-  <script type="text/babel">
-    // Registrar Service Worker (PWA)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(() => {
-          // Se falhar, o app continua funcionando normalmente.
-        });
-      });
-    }
+<div id="root"></div>
 
-    // Aplicação React para controle de medicamentos
-    function App() {
-      // Estados para armazenar os dados
-      const [medications, setMedications] = React.useState([]);
-      const [history, setHistory] = React.useState([]);
-      const [newMedication, setNewMedication] = React.useState({
-        name: '',
-        dosage: '',
-        frequency: '',
-        stock: 0,
-        alertThreshold: 5,
-        lastTaken: null,
-        nextDue: null,
-        customSchedule: false,
-        morningDose: 0,
-        eveningDose: 0,
-      });
-      const [activeTab, setActiveTab] = React.useState('medicines');
-      
-      // Estado para o modal de adicionar estoque
-      const [showStockModal, setShowStockModal] = React.useState(false);
-      const [stockAmount, setStockAmount] = React.useState("");
-      const [currentMedicationId, setCurrentMedicationId] = React.useState(null);
-      
-      // Estados para o modal de registro de dose
-      const [showDoseModal, setShowDoseModal] = React.useState(false);
-      const [selectedDoseTime, setSelectedDoseTime] = React.useState("");
-      const [selectedMedicationId, setSelectedMedicationId] = React.useState(null);
-      const [customDoseTime, setCustomDoseTime] = React.useState('');
-      
-      // Estado para o modal de confirmação de limpar histórico
-      const [showClearHistoryModal, setShowClearHistoryModal] = React.useState(false);
-      
-      // NOVOS ESTADOS para editar medicamento
-      const [showEditModal, setShowEditModal] = React.useState(false);
-      const [editingMedication, setEditingMedication] = React.useState(null);
-      
-      // NOVO ESTADO para notificações
-      const [notification, setNotification] = React.useState({
-        show: false,
-        message: ''
-      });
-
-      
-
-// Notificações do navegador (lembretes)
-const [remindersEnabled, setRemindersEnabled] = React.useState(() => {
-  try { return localStorage.getItem('remindersEnabled') === 'true'; } catch { return false; }
-});
-const [notificationPermission, setNotificationPermission] = React.useState(() => {
-  return ('Notification' in window) ? Notification.permission : 'unsupported';
-});
-
-// PWA install prompt (principalmente Android/Chrome)
-const [canInstall, setCanInstall] = React.useState(false);
-const [showInstallHelp, setShowInstallHelp] = React.useState(false);
-const [showNotifHelp, setShowNotifHelp] = React.useState(false);
-const deferredPromptRef = React.useRef(null);
-
-React.useEffect(() => {
-  const handler = (e) => {
-    e.preventDefault();
-    deferredPromptRef.current = e;
-    setCanInstall(true);
-  };
-  window.addEventListener('beforeinstallprompt', handler);
-  return () => window.removeEventListener('beforeinstallprompt', handler);
-}, []);
-
-const handleInstallClick = async () => {
-  const dp = deferredPromptRef.current;
-  if (!dp) {
-    setShowInstallHelp(true);
-    return;
-  }
-  dp.prompt();
-  try { await dp.userChoice; } catch (e) {}
-  deferredPromptRef.current = null;
-  setCanInstall(false);
-};
-const medsRef = React.useRef([]);
-// Função auxiliar para formatar números decimais (remover .0 quando for número inteiro)
-      const formatDose = (value) => {
-        return value % 1 === 0 ? value.toString() : value.toFixed(1);
-      };
-      
-      // Função para agrupar o histórico por data
-      const groupHistoryByDate = (historyItems) => {
-        const grouped = {};
-        
-        historyItems.forEach(item => {
-          const date = new Date(item.date);
-          const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-          
-          if (!grouped[dateKey]) {
-            grouped[dateKey] = [];
-          }
-          
-          grouped[dateKey].push(item);
-        });
-        
-        // Ordenar as datas (mais recentes primeiro)
-        return Object.keys(grouped)
-          .sort((a, b) => {
-            const [yearA, monthA, dayA] = a.split('-').map(Number);
-            const [yearB, monthB, dayB] = b.split('-').map(Number);
-            
-            const dateA = new Date(yearA, monthA, dayA);
-            const dateB = new Date(yearB, monthB, dayB);
-            
-            return dateB - dateA;
-          })
-          .reduce((result, key) => {
-            result[key] = grouped[key];
-            return result;
-          }, {});
-      };
-
-      // Formatar a data de maneira amigável
-      const formatHistoryDate = (dateKey) => {
-        const [year, month, day] = dateKey.split('-').map(Number);
-        const date = new Date(year, month, day);
-        
-        // Verificar se é hoje
-        const today = new Date();
-        if (
-          date.getDate() === today.getDate() &&
-          date.getMonth() === today.getMonth() &&
-          date.getFullYear() === today.getFullYear()
-        ) {
-          return 'Hoje';
-        }
-        
-        // Verificar se é ontem
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (
-          date.getDate() === yesterday.getDate() &&
-          date.getMonth() === yesterday.getMonth() &&
-          date.getFullYear() === yesterday.getFullYear()
-        ) {
-          return 'Ontem';
-        }
-        
-        // Formatar como data regular
-        return new Intl.DateTimeFormat('pt-BR', {
-          day: '2-digit',
-          month: 'long',
-          year: 'numeric',
-        }).format(date);
-      };
-
-      // Formatar hora
-      const formatHistoryTime = (dateString) => {
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('pt-BR', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(date);
-      };
-
-      // Determina o tipo de atividade com base na mensagem
-      const determineActivityType = (message) => {
-        if (message.includes('adicionado com estoque')) {
-          return 'Add';
-        } else if (message.includes('foi tomado')) {
-          return 'Take';
-        } else if (message.includes('Adicionadas')) {
-          return 'Stock';
-        } else if (message.includes('removido')) {
-          return 'Remove';
-        } else if (message.includes('limpo')) {
-          return 'Clear';
-        } else if (message.includes('editado')) {
-          return 'Edit';
-        }
-        return 'Other';
-      };
-
-      // Retorna o ícone apropriado para cada tipo de atividade
-      const getActivityIcon = (activityType) => {
-        switch (activityType) {
-          case 'Add': return '➕';
-          case 'Take': return '💊';
-          case 'Stock': return '📦';
-          case 'Remove': return '🗑️';
-          case 'Clear': return '🧹';
-          case 'Edit': return '✏️';
-          default: return '📝';
-        }
-      };
-
-      // Formata a mensagem de histórico para ser mais concisa e legível
-      const formatHistoryMessage = (message) => {
-        // Remover "Estoque restante: X unidades" para tornar a mensagem mais curta
-        let formattedMessage = message.replace(/\. Estoque restante: [\d\.]+( unidades)?\./, '.');
-        
-        // Substituir padrões comuns por versões mais concisas
-        formattedMessage = formattedMessage
-          .replace(/Medicamento (.+) adicionado com estoque inicial de (.+) unidades\./, 'Adicionado $1 ao sistema com $2 unidades.')
-          .replace(/(.+) foi tomado em (.+) \(Dose da (.+): (.+) comprimidos?\)/, '$1 - Dose da $3: $4 comprimido(s)')
-          .replace(/(.+) foi tomado em (.+)\./, 'Tomou $1')
-          .replace(/Adicionadas (.+) unidades de (.+) ao estoque\. Novo total: (.+) unidades\./, 'Estoque de $2 atualizado para $3 (+$1)')
-          .replace(/Medicamento (.+) foi editado\./, 'Informações de $1 atualizadas.');
-          
-        return formattedMessage;
-      };
-
-      // Estilos inline para os componentes
-      const styles = {
-        container: {
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: '20px',
-          fontFamily: 'Arial, sans-serif',
-        },
-        header: {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  gap: '12px',
-  marginBottom: '20px',
-  color: 'var(--primary)',
-  flexWrap: 'wrap',
-},
-headerTitleArea: {
-  minWidth: '220px',
-},
-headerActions: {
-  display: 'flex',
-  gap: '10px',
-  flexWrap: 'wrap',
-  justifyContent: 'flex-end',
-},
-smallButton: {
-  padding: '8px 12px',
-  fontSize: '13px',
-},
-
-        form: {
-          marginBottom: '20px',
-          padding: '15px',
-          backgroundColor: 'var(--primary-lighter)',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        },
-        input: {
-          width: '100%',
-          padding: '10px',
-          margin: '5px 0',
-          borderRadius: '4px',
-          border: '1px solid #ddd',
-          fontSize: '16px',
-        },
-        button: {
-          padding: '10px 15px',
-          backgroundColor: 'var(--primary)',
-          color: 'var(--white)',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          margin: '5px 5px 5px 0',
-          fontSize: '14px',
-          transition: 'background-color 0.3s',
-        },
-        dangerButton: {
-          backgroundColor: 'var(--danger)',
-        },
-        warningButton: {
-          backgroundColor: 'var(--warning)',
-        },
-        editButton: {
-          backgroundColor: '#4682B4',
-        },
-        disabledButton: {
-          opacity: 0.6,
-          cursor: 'not-allowed',
-        },
-        medicationCard: {
-          border: '1px solid var(--primary-light)',
-          borderRadius: '8px',
-          padding: '15px',
-          marginBottom: '15px',
-          backgroundColor: 'var(--white)',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-        },
-        lowStock: {
-          color: 'var(--danger)',
-          fontWeight: 'bold',
-        },
-        tabs: {
-          display: 'flex',
-          marginBottom: '20px',
-        },
-        tab: {
-          padding: '12px 20px',
-          backgroundColor: 'var(--primary-lighter)',
-          cursor: 'pointer',
-          borderRadius: '5px 5px 0 0',
-          marginRight: '5px',
-          transition: 'background-color 0.3s',
-        },
-        activeTab: {
-          backgroundColor: 'var(--primary)',
-          color: 'var(--white)',
-        },
-        medicineList: {
-          marginBottom: '20px',
-        },
-        dosageSchedule: {
-          marginTop: '10px',
-          padding: '10px',
-          backgroundColor: 'var(--primary-lighter)',
-          borderRadius: '4px',
-        },
-        dosageTime: {
-          display: 'inline-block',
-          margin: '5px 10px 5px 0',
-          padding: '5px 10px',
-          backgroundColor: 'var(--primary-light)',
-          color: 'white',
-          borderRadius: '4px',
-        },
-        modalButton: {
-          padding: '8px 16px',
-          backgroundColor: 'var(--primary)',
-          color: 'var(--white)',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer',
-        },
-        modalCancelButton: {
-          backgroundColor: '#aaa',
-        },
-        doseTimeButton: {
-          padding: '10px 15px',
-          margin: '5px',
-          backgroundColor: 'var(--primary-lighter)',
-          border: '1px solid var(--primary-light)',
-          borderRadius: '4px',
-          cursor: 'pointer',
-          width: 'calc(50% - 10px)',
-          textAlign: 'center',
-        },
-        selectedDoseTimeButton: {
-          backgroundColor: 'var(--primary)',
-          color: 'var(--white)',
-        },
-        // Novos estilos para o histórico redesenhado
-        clearHistoryButton: {
-          marginTop: '0',
-          backgroundColor: 'var(--danger)',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '10px 15px',
-          cursor: 'pointer',
-          display: 'block',
-        },
-        historyHeader: {
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px',
-        },
-        historyContainer: {
-          maxHeight: '600px',
-          overflowY: 'auto',
-          borderRadius: '8px',
-        },
-        historyDateGroup: {
-          marginBottom: '20px',
-          backgroundColor: 'var(--white)',
-          borderRadius: '8px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-        },
-        historyDateHeader: {
-          backgroundColor: 'var(--primary-light)',
-          color: 'white',
-          padding: '10px 15px',
-          fontWeight: 'bold',
-          borderTopLeftRadius: '8px',
-          borderTopRightRadius: '8px',
-        },
-        historyItem: {
-          padding: '12px 15px',
-          borderBottom: '1px solid var(--primary-lighter)',
-          display: 'flex',
-          alignItems: 'flex-start',
-        },
-        historyTime: {
-          minWidth: '70px',
-          color: '#666',
-          fontSize: '14px',
-          paddingTop: '2px',
-        },
-        historyIconContainer: {
-          marginRight: '15px',
-          marginLeft: '5px',
-        },
-        historyIcon: {
-          display: 'inline-flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '28px',
-          height: '28px',
-          borderRadius: '50%',
-          fontSize: '16px',
-        },
-        historyIconAdd: {
-          backgroundColor: '#e3f2fd',
-          color: '#2196f3',
-        },
-        historyIconTake: {
-          backgroundColor: '#e8f5e9',
-          color: '#4caf50',
-        },
-        historyIconStock: {
-          backgroundColor: '#fff3e0',
-          color: '#ff9800',
-        },
-        historyIconRemove: {
-          backgroundColor: '#ffebee',
-          color: '#f44336',
-        },
-        historyIconClear: {
-          backgroundColor: '#f3e5f5',
-          color: '#9c27b0',
-        },
-        historyIconEdit: {
-          backgroundColor: '#e1f5fe',
-          color: '#03a9f4',
-        },
-        historyIconOther: {
-          backgroundColor: '#f5f5f5',
-          color: '#607d8b',
-        },
-        historyContent: {
-          flex: 1,
-          fontSize: '15px',
-          lineHeight: '1.5',
-        },
-        // Estilos para a legenda
-        legendContainer: {
-          backgroundColor: 'var(--white)',
-          padding: '10px 15px',
-          borderRadius: '8px',
-          marginBottom: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        },
-        legendTitle: {
-          margin: '0 0 10px 0',
-          fontSize: '16px',
-          color: 'var(--primary)',
-        },
-        legendItems: {
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '10px',
-        },
-        legendItem: {
-          display: 'flex',
-          alignItems: 'center',
-          marginRight: '15px',
-          marginBottom: '5px',
-        },
-        legendText: {
-          marginLeft: '5px',
-          fontSize: '14px',
-        },
-        // Estilos para a notificação
-        notification: {
-          padding: '10px 15px',
-          backgroundColor: 'var(--success)',
-          color: 'white',
-          borderRadius: '4px',
-          marginBottom: '15px',
-          fontWeight: 'bold',
-        },
-      };
-
-      // NOVA FUNÇÃO para mostrar notificações temporárias
-      const showNotification = (message) => {
-        setNotification({
-          show: true,
-          message
-        });
-        
-        // Esconder a notificação após 3 segundos
-        setTimeout(() => {
-          setNotification({
-            show: false,
-            message: ''
-          });
-        }, 3000);
-      };
-
-      
-
-// Guardar meds em ref para o "timer" não depender do estado no intervalo
-React.useEffect(() => {
-  medsRef.current = medications;
-}, [medications]);
-
-const toggleReminders = async () => {
-  if (!('Notification' in window)) {
-    showNotification('Seu navegador não suporta notificações.');
-    return;
-  }
-
-  // Desativar
-  if (remindersEnabled) {
-    setRemindersEnabled(false);
-    try { localStorage.setItem('remindersEnabled', 'false'); } catch (e) {}
-    showNotification('Notificações desativadas.');
-    return;
-  }
-
-  // Ativar
-  const perm = await Notification.requestPermission();
-  setNotificationPermission(perm);
-
-  if (perm === 'granted') {
-    setRemindersEnabled(true);
-    try { localStorage.setItem('remindersEnabled', 'true'); } catch (e) {}
-    showNotification('Notificações ativadas ✅');
-  } else {
-    showNotification('Permissão de notificações negada.');
-    setShowNotifHelp(true);
-  }
-};
-
-// Notificação de teste (para validar permissões)
-const testNotification = () => {
-  if (!('Notification' in window)) {
-    showNotification('Seu navegador não suporta notificações.');
-    return;
-  }
-  if (Notification.permission !== 'granted') {
-    showNotification('Permissão não liberada. Abra a ajuda para liberar.');
-    setShowNotifHelp(true);
-    return;
-  }
-  try {
-    new Notification('Teste de lembrete 💊', {
-      body: 'Se você viu isso, tá funcionando ✅',
-      icon: '/icon-192.svg'
-    });
-    showNotification('Teste enviado ✅');
-  } catch (e) {
-    showNotification('Não consegui disparar o teste aqui.');
-  }
-};
-
-
-// Checar doses "vencidas agora" e disparar lembrete (enquanto o app estiver aberto)
-React.useEffect(() => {
-  if (!remindersEnabled) return;
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-
-  const checkDue = () => {
-    const now = new Date();
-    const meds = medsRef.current || [];
-
-    meds.forEach((m) => {
-      if (!m.nextDue) return;
-
-      const due = new Date(m.nextDue);
-      const diff = now - due;
-
-      // janela de 1 minuto após o horário da dose
-      const shouldNotify = diff >= 0 && diff < 60 * 1000;
-      if (!shouldNotify) return;
-
-      if (m.lastNotified === m.nextDue) return;
-
-      // Atualizar marca de notificação para não repetir
-      setMedications(prev =>
-        prev.map(pm => pm.id === m.id ? { ...pm, lastNotified: m.nextDue } : pm)
-      );
-
-      // Toast interno
-      showNotification(`Hora do remédio: ${m.name} (${m.dosage})`);
-
-      // Notificação do navegador
+<script type="text/babel">
+  // ── Service Worker registration ──────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
       try {
-        new Notification('Hora do remédio 💊', {
-          body: `${m.name} — ${m.dosage}`,
-          icon: '/icon-192.svg'
-        });
-      } catch (e) {
-        // silencioso
-      }
+        const reg = await navigator.serviceWorker.register('/service-worker.js');
+        if ('periodicSync' in reg) {
+          try {
+            const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+            if (status.state === 'granted') {
+              await reg.periodicSync.register('check-medications', { minInterval: 15 * 60 * 1000 });
+            }
+          } catch (_) {}
+        }
+      } catch (_) {}
     });
-  };
+  }
 
-  checkDue();
-  const id = setInterval(checkDue, 30 * 1000);
-  return () => clearInterval(id);
-}, [remindersEnabled]);
-
-// Exportar lembretes para o Calendário do celular (.ics) — funciona mesmo com o site fechado
-const downloadCalendarIcs = () => {
-  const meds = medications || [];
-  const now = new Date();
-  const horizon = new Date(now);
-  horizon.setDate(horizon.getDate() + 30);
-
-  const pad = (n) => String(n).padStart(2, '0');
-  const fmtICS = (d) => (
-    `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`
-  );
-
-  const parseFrequencyToMinutes = (med) => {
-    if (med.customSchedule) return 12 * 60; // 12h fixo (manhã/noite)
-    if (!med.frequency) return null;
-
-    const f = med.frequency.toLowerCase();
-    const numMatch = f.match(/\d+/);
-    const n = numMatch ? parseInt(numMatch[0], 10) : null;
-    if (!n) return null;
-
-    if (f.includes('hora')) return n * 60;
-    if (f.includes('dia')) return n * 24 * 60;
-    if (f.includes('semana')) return n * 7 * 24 * 60;
-    if (f.includes('mês') || f.includes('mes')) return n * 30 * 24 * 60; // aproximação
-    return null;
-  };
-
-  let events = '';
-  let total = 0;
-
-  meds.forEach((m) => {
-    if (!m.nextDue) return;
-
-    const intervalMin = parseFrequencyToMinutes(m);
-    if (!intervalMin) return;
-
-    let d = new Date(m.nextDue);
-
-    // Se já passou muito, começar "agora" arredondando para o próximo intervalo
-    if (d < now) d = new Date(now);
-
-    // Gerar ocorrências até 30 dias (limite de segurança)
-    let guard = 0;
-    while (d <= horizon && guard < 500 && total < 800) {
-      const dtStart = new Date(d);
-      const dtEnd = new Date(d);
-      dtEnd.setMinutes(dtEnd.getMinutes() + 5);
-
-      const uid = `${m.id}-${dtStart.getTime()}@controle-remedios`;
-      const summary = `Tomar ${m.name} (${m.dosage})`;
-
-      events += [
-        'BEGIN:VEVENT',
-        `UID:${uid}`,
-        `DTSTAMP:${fmtICS(now)}`,
-        `DTSTART:${fmtICS(dtStart)}`,
-        `DTEND:${fmtICS(dtEnd)}`,
-        `SUMMARY:${summary}`,
-        `DESCRIPTION:Hora do remédio — ${m.name} (${m.dosage}).`,
-        'BEGIN:VALARM',
-        'ACTION:DISPLAY',
-        'DESCRIPTION:Lembrete de medicamento',
-        'TRIGGER:-PT10M',
-        'END:VALARM',
-        'END:VEVENT'
-      ].join('\r\n') + '\r\n';
-
-      total += 1;
-      guard += 1;
-
-      d = new Date(d.getTime() + intervalMin * 60 * 1000);
-    }
+  // ── IndexedDB helpers (share meds with Service Worker) ───────────────────
+  const DB_NAME = 'remedios-db';
+  const openIDB = () => new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('medications'))
+        db.createObjectStore('medications', { keyPath: 'id' });
+    };
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = e => rej(e.target.error);
   });
 
-  if (!events) {
-    showNotification('Não encontrei horários (próxima dose) para exportar.');
-    return;
-  }
+  const syncIDB = async (meds) => {
+    try {
+      const db = await openIDB();
+      const tx = db.transaction('medications', 'readwrite');
+      const store = tx.objectStore('medications');
+      await new Promise((res, rej) => { const r = store.clear(); r.onsuccess = res; r.onerror = rej; });
+      meds.forEach(m => store.put(m));
+    } catch (_) {}
+  };
 
-  const ics = [
-    'BEGIN:VCALENDAR',
-    'VERSION:2.0',
-    'PRODID:-//ControleRemedios//PT-BR//',
-    'CALSCALE:GREGORIAN',
-    events.trim(),
-    'END:VCALENDAR'
-  ].join('\r\n');
+  // ── Taylor Swift Eras ────────────────────────────────────────────────────
+  const ERAS = [
+    { name: "Taylor's Version", minDays: 0,  emoji: '✨', color: '#c084fc' },
+    { name: "Fearless Era",     minDays: 3,  emoji: '⭐', color: '#fbbf24' },
+    { name: "Red Era",          minDays: 7,  emoji: '❤️', color: '#f472b6' },
+    { name: "1989 Era",         minDays: 14, emoji: '🏙️', color: '#60a5fa' },
+    { name: "Reputation Era",   minDays: 21, emoji: '🐍', color: '#9ca3af' },
+    { name: "Lover Era",        minDays: 30, emoji: '💖', color: '#ec4899' },
+    { name: "Folklore Era",     minDays: 60, emoji: '🌲', color: '#a3e635' },
+    { name: "Midnights Era",    minDays: 90, emoji: '🌙', color: '#818cf8' },
+  ];
+  const getEra     = (s) => [...ERAS].reverse().find(e => s >= e.minDays) || ERAS[0];
+  const getNextEra = (s) => ERAS.find(e => e.minDays > s) || null;
 
-  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  const DOSE_MSGS = [
+    "Você arrasou! Cuidar da saúde é um ato de amor ✨",
+    "Você é fearless! Continue assim ⭐",
+    "Mais um passo para se sentir melhor! 💊",
+    "Orgulho de você, Livia! 💖",
+    "You're doing amazing, swiftie! 🌟",
+    "Cada dose conta! Você é incrível 🦋",
+    "This is you trying, and you're doing great ✨",
+    "Shake it off e tome seu remédio! 💊🎵",
+  ];
 
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'lembretes-medicamentos.ics';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  // ── Streak calculation ───────────────────────────────────────────────────
+  const calcStreak = (history) => {
+    if (!history || history.length === 0) return 0;
+    const days = new Set(
+      history
+        .filter(h => h.message && h.message.includes('foi tomado'))
+        .map(h => { const d = new Date(h.date); return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; })
+    );
+    if (days.size === 0) return 0;
+    const today = new Date();
+    const fmt = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const todayKey = fmt(today);
+    const yest = new Date(today); yest.setDate(yest.getDate() - 1);
+    if (!days.has(todayKey) && !days.has(fmt(yest))) return 0;
+    const start = days.has(todayKey) ? new Date(today) : new Date(yest);
+    let streak = 0;
+    const cur = new Date(start);
+    for (let i = 0; i < 400; i++) {
+      if (days.has(fmt(cur))) { streak++; cur.setDate(cur.getDate() - 1); }
+      else break;
+    }
+    return streak;
+  };
 
-  showNotification('Arquivo de calendário gerado ✅ (importe no celular).');
-};
-// Carregar dados do localStorage ao iniciar
-      React.useEffect(() => {
-        const savedMedications = localStorage.getItem('medications');
-        const savedHistory = localStorage.getItem('medicationHistory');
-        
-        if (savedMedications) {
-          setMedications(JSON.parse(savedMedications));
-        }
-        
-        if (savedHistory) {
-          setHistory(JSON.parse(savedHistory));
-        }
-      }, []);
+  // ── Main App ─────────────────────────────────────────────────────────────
+  function App() {
+    const [medications, setMedications] = React.useState([]);
+    const [history, setHistory]         = React.useState([]);
+    const [activeTab, setActiveTab]     = React.useState('medicines');
 
-      // Salvar dados no localStorage quando há mudanças
-      React.useEffect(() => {
-        localStorage.setItem('medications', JSON.stringify(medications));
-      }, [medications]);
+    const emptyMed = { name:'', dosage:'', frequency:'', stock:0, alertThreshold:5, lastTaken:null, nextDue:null, customSchedule:false, morningDose:0, eveningDose:0 };
+    const [newMed, setNewMed] = React.useState(emptyMed);
 
-      React.useEffect(() => {
-        localStorage.setItem('medicationHistory', JSON.stringify(history));
-      }, [history]);
-      
-      // Função para limpar o histórico - CORRIGIDA
-      const handleClearHistory = () => {
-        // Limpa completamente o array de histórico, sem manter nenhum item
-        setHistory([]);
-        
-        // Fecha o modal de confirmação
-        setShowClearHistoryModal(false);
-        
-        // Adiciona um novo item indicando que o histórico foi limpo
-        const historyItem = {
-          id: Date.now().toString(),
-          date: new Date().toISOString(),
-          message: 'Histórico foi limpo.',
-        };
-        
-        // Define o histórico para conter apenas este novo item
-        setHistory([historyItem]);
-      };
+    const [showStock, setShowStock]   = React.useState(false);
+    const [stockAmt, setStockAmt]     = React.useState('');
+    const [stockId, setStockId]       = React.useState(null);
+    const [showDose, setShowDose]     = React.useState(false);
+    const [doseTime, setDoseTime]     = React.useState('');
+    const [doseMedId, setDoseMedId]   = React.useState(null);
+    const [customTime, setCustomTime] = React.useState('');
+    const [showClear, setShowClear]   = React.useState(false);
+    const [showEdit, setShowEdit]     = React.useState(false);
+    const [editMed, setEditMed]       = React.useState(null);
+    const [showInstall, setShowInstall] = React.useState(false);
+    const [showNotifHelp, setShowNotifHelp] = React.useState(false);
 
-      // Função para adicionar um novo medicamento
-      const handleAddMedication = (e) => {
-        e.preventDefault();
-        
-        // Validar campos obrigatórios
-        if (!newMedication.name || !newMedication.dosage || newMedication.stock <= 0) {
-          alert('Por favor, preencha todos os campos obrigatórios.');
-          return;
-        }
-        
-        // Validar programação personalizada
-        if (newMedication.customSchedule) {
-          if (newMedication.morningDose <= 0 && newMedication.eveningDose <= 0) {
-            alert('Por favor, especifique pelo menos uma dose para o período da manhã ou da noite.');
-            return;
-          }
-        } else if (!newMedication.frequency) {
-          // Frequência é obrigatória apenas para programação padrão
-          alert('Por favor, especifique a frequência do medicamento.');
-          return;
-        }
-        
-        // Calcular próxima data
-        let nextDue;
+    const [toast, setToast] = React.useState({ show: false, msg: '', emoji: '✨' });
+    const [remindersOn, setRemindersOn] = React.useState(() => {
+      try { return localStorage.getItem('remindersEnabled') === 'true'; } catch { return false; }
+    });
+    const [canInstall, setCanInstall] = React.useState(false);
+    const dpRef  = React.useRef(null);
+    const medsRef = React.useRef([]);
+    const [sparkles, setSparkles] = React.useState([]);
+
+    const streak  = React.useMemo(() => calcStreak(history), [history]);
+    const era     = React.useMemo(() => getEra(streak), [streak]);
+    const nextEra = React.useMemo(() => getNextEra(streak), [streak]);
+
+    // Load
+    React.useEffect(() => {
+      try {
+        const m = localStorage.getItem('medications');
+        const h = localStorage.getItem('medicationHistory');
+        if (m) setMedications(JSON.parse(m));
+        if (h) setHistory(JSON.parse(h));
+      } catch (_) {}
+    }, []);
+
+    // Persist
+    React.useEffect(() => {
+      try { localStorage.setItem('medications', JSON.stringify(medications)); } catch (_) {}
+      syncIDB(medications);
+      medsRef.current = medications;
+    }, [medications]);
+    React.useEffect(() => {
+      try { localStorage.setItem('medicationHistory', JSON.stringify(history)); } catch (_) {}
+    }, [history]);
+
+    // PWA install prompt
+    React.useEffect(() => {
+      const h = e => { e.preventDefault(); dpRef.current = e; setCanInstall(true); };
+      window.addEventListener('beforeinstallprompt', h);
+      return () => window.removeEventListener('beforeinstallprompt', h);
+    }, []);
+
+    // Reminder interval
+    React.useEffect(() => {
+      if (!remindersOn) return;
+      if (!('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+      const check = () => {
         const now = new Date();
-        
-        if (newMedication.customSchedule) {
-          // Para programação personalizada, próxima dose depende do horário atual
-          const hour = now.getHours();
-          
-          if (hour < 12 && newMedication.morningDose > 0) {
-            // Se for de manhã, próxima dose é em 12 horas
-            nextDue = calculateNextDue(now, "", "morning");
-          } else if (newMedication.eveningDose > 0) {
-            // Se for de tarde/noite, próxima dose é em 12 horas
-            nextDue = calculateNextDue(now, "", "evening");
-          } else {
-            // Caso só tenha dose da manhã, agendar para a manhã do dia seguinte
-            const tomorrow = new Date(now);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(8, 0, 0); // 8:00 AM
-            nextDue = tomorrow.toISOString();
+        (medsRef.current || []).forEach(m => {
+          if (!m.nextDue) return;
+          const diff = now - new Date(m.nextDue);
+          if (diff >= 0 && diff < 60000 && m.lastNotified !== m.nextDue) {
+            setMedications(prev => prev.map(p => p.id === m.id ? { ...p, lastNotified: m.nextDue } : p));
+            showToast(`Hora do remédio: ${m.name}!`, '💊');
+            try {
+              new Notification('Hora do remédio 💊', {
+                body: `${m.name} — ${m.dosage}`,
+                icon: '/icon-192.svg',
+                badge: '/icon-192.svg',
+                tag: `med-${m.id}`,
+                vibrate: [200, 100, 200],
+              });
+            } catch (_) {}
           }
-        } else {
-          // Para programação padrão, usar frequência
-          nextDue = calculateNextDue(now, newMedication.frequency);
-        }
-        
-        const medicationWithId = {
-          ...newMedication,
-          id: Date.now().toString(),
-          nextDue,
-          lastNotified: null,
-        };
-        
-        setMedications([...medications, medicationWithId]);
-        setNewMedication({
-          name: '',
-          dosage: '',
-          frequency: '',
-          stock: 0,
-          alertThreshold: 5,
-          lastTaken: null,
-          nextDue: null,
-          customSchedule: false,
-          morningDose: 0,
-          eveningDose: 0,
         });
-        
-        // Adicionar ao histórico
-        addToHistory(`Medicamento ${medicationWithId.name} adicionado com estoque inicial de ${formatDose(medicationWithId.stock)} unidades.`);
-        
-        // Mostrar notificação de sucesso
-        showNotification(`${medicationWithId.name} adicionado com sucesso!`);
-        
-        // Mudar para a aba de medicamentos
-        setActiveTab('medicines');
       };
-      
-      // NOVA FUNÇÃO para abrir o modal de edição
-      const openEditModal = (id) => {
-        const medicationToEdit = medications.find(med => med.id === id);
-        if (!medicationToEdit) return;
-        
-        setEditingMedication({...medicationToEdit});
-        setShowEditModal(true);
-      };
-      
-      // NOVA FUNÇÃO para salvar as alterações na edição
-      const handleSaveEdit = () => {
-        // Validar campos obrigatórios
-        if (!editingMedication.name || !editingMedication.dosage) {
-          alert('Por favor, preencha todos os campos obrigatórios.');
-          return;
-        }
-        
-        // Validar programação personalizada
-        if (editingMedication.customSchedule) {
-          if (editingMedication.morningDose <= 0 && editingMedication.eveningDose <= 0) {
-            alert('Por favor, especifique pelo menos uma dose para o período da manhã ou da noite.');
-            return;
-          }
-        } else if (!editingMedication.frequency) {
-          // Frequência é obrigatória apenas para programação padrão
-          alert('Por favor, especifique a frequência do medicamento.');
-          return;
-        }
-        
-        // Atualizar a lista de medicamentos
-        setMedications(medications.map(med => {
-          if (med.id === editingMedication.id) {
-            return editingMedication;
-          }
-          return med;
-        }));
-        
-        // Adicionar ao histórico
-        addToHistory(`Medicamento ${editingMedication.name} foi editado.`);
-        
-        // Mostrar notificação
-        showNotification(`${editingMedication.name} atualizado com sucesso!`);
-        
-        // Fechar o modal
-        setShowEditModal(false);
-      };
-      
-      // Função para abrir o modal de tomar medicamento
-      const openTakeMedicationModal = (id) => {
-        const medication = medications.find(med => med.id === id);
-        setSelectedMedicationId(id);
-        
-        if (medication.customSchedule) {
-          setShowDoseModal(true);
-          setSelectedDoseTime("");
-          setCustomDoseTime(''); // Resetar o campo de horário personalizado
-        } else {
-          // Para medicamentos com programação normal, registrar diretamente
-          handleTakeMedication(id);
-        }
-      };
-      
-      const handleTakeMedication = (id, doseTime = null, customTime = null) => {
-        // Usar o horário personalizado se fornecido, caso contrário usar o horário atual
-        let now;
-        if (customTime && customTime !== '') {
-          now = new Date(customTime);
-        } else {
-          now = new Date();
-        }
-        
-        setMedications(medications.map(med => {
-          if (med.id === id) {
-            let doseAmount = 1; // Dose padrão
-            let doseDescription = "";
-            
-            // Se for programação personalizada e um horário foi selecionado
-            if (med.customSchedule && doseTime) {
-              if (doseTime === "morning") {
-                doseAmount = med.morningDose;
-                doseDescription = ` (Dose da manhã: ${formatDose(doseAmount)} comprimido${doseAmount !== 1 ? 's' : ''})`;
-              } else if (doseTime === "evening") {
-                doseAmount = med.eveningDose;
-                doseDescription = ` (Dose da noite: ${formatDose(doseAmount)} comprimido${doseAmount !== 1 ? 's' : ''})`;
-              }
-            }
-            
-            // Calcular próxima data com base na frequência e no horário informado (retroativo ou atual)
-            const nextDue = calculateNextDue(now, med.frequency, doseTime);
-            const newStock = med.stock - doseAmount;
-            
-            // Adicionar ao histórico usando o horário informado
-            addToHistory(`${med.name} foi tomado em ${formatDate(now)}${doseDescription}. Estoque restante: ${formatDose(newStock)} unidades.`);
-            
-            // Mostrar notificação
-            showNotification(`Dose de ${med.name} registrada!`);
-            
-            return {
-              ...med,
-              lastTaken: now.toISOString(), // Usar o horário informado como último horário de tomada
-              nextDue,
-              stock: newStock,
-            };
-          }
-          return med;
-        }));
-        
-        setShowDoseModal(false);
-        setCustomDoseTime(''); // Resetar o campo de horário personalizado
-      };
-      
-      // Função para abrir o modal de adicionar estoque
-      const openAddStockModal = (id) => {
-        setCurrentMedicationId(id);
-        setStockAmount("");
-        setShowStockModal(true);
-      };
-      
-      // Função para adicionar estoque de um medicamento
-      const handleAddStock = () => {
-        const amountToAdd = parseFloat(stockAmount);
-        
-        if (isNaN(amountToAdd) || amountToAdd <= 0) {
-          alert('Por favor, informe um número válido maior que zero.');
-          return;
-        }
-        
-        setMedications(medications.map(med => {
-          if (med.id === currentMedicationId) {
-            const newStock = med.stock + amountToAdd;
-            addToHistory(`Adicionadas ${formatDose(amountToAdd)} unidades de ${med.name} ao estoque. Novo total: ${formatDose(newStock)} unidades.`);
-            
-            // Mostrar notificação
-            showNotification(`Estoque de ${med.name} atualizado!`);
-            
-            return {
-              ...med,
-              stock: newStock,
-            };
-          }
-          return med;
-        }));
-        
-        setShowStockModal(false);
-        setCurrentMedicationId(null);
-      };
+      check();
+      const id = setInterval(check, 30000);
+      return () => clearInterval(id);
+    }, [remindersOn]);
 
-      // Função para remover um medicamento
-      const handleRemoveMedication = (id) => {
-        const medicationToRemove = medications.find(med => med.id === id);
-        if (!medicationToRemove) return;
-        
-        if (window.confirm(`Tem certeza que deseja remover ${medicationToRemove.name} da lista?`)) {
-          setMedications(medications.filter(med => med.id !== id));
-          addToHistory(`Medicamento ${medicationToRemove.name} foi removido da lista.`);
-          
-          // Mostrar notificação
-          showNotification(`${medicationToRemove.name} removido da lista.`);
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    const showToast = (msg, emoji = '✨') => {
+      setToast({ show: true, msg, emoji });
+      setTimeout(() => setToast({ show: false, msg: '', emoji: '✨' }), 3600);
+    };
+
+    const spawnSparkles = (x, y) => {
+      const emojis = ['✨','⭐','💖','🌟','💫','🦋'];
+      const items = Array.from({ length: 7 }, (_, i) => ({
+        id: Date.now() + i,
+        x: x + (Math.random() - 0.5) * 120,
+        y: y + (Math.random() - 0.5) * 120,
+        e: emojis[Math.floor(Math.random() * emojis.length)],
+      }));
+      setSparkles(p => [...p, ...items]);
+      setTimeout(() => setSparkles(p => p.filter(s => !items.find(i => i.id === s.id))), 1000);
+    };
+
+    const fmtDose = v => v % 1 === 0 ? String(v) : v.toFixed(1);
+
+    const fmtDate = d => {
+      if (!d) return 'Nunca';
+      return new Intl.DateTimeFormat('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }).format(new Date(d));
+    };
+
+    const isLow     = m => m.stock <= m.alertThreshold;
+    const isOverdue = m => m.nextDue && new Date(m.nextDue) < new Date();
+
+    const calcNext = (date, freq, slot = null) => {
+      const d = new Date(date);
+      if (slot) { d.setHours(d.getHours() + 12); return d.toISOString(); }
+      const f = (freq || '').toLowerCase();
+      const n = parseInt((f.match(/\d+/) || [1])[0]);
+      if (f.includes('hora'))  d.setHours(d.getHours() + n);
+      else if (f.includes('dia'))  d.setDate(d.getDate() + n);
+      else if (f.includes('semana')) d.setDate(d.getDate() + n * 7);
+      else if (f.includes('mês') || f.includes('mes')) d.setMonth(d.getMonth() + n);
+      return d.toISOString();
+    };
+
+    const addHist = msg => {
+      const item = { id: Date.now().toString(), date: new Date().toISOString(), message: msg };
+      setHistory(p => [item, ...p]);
+    };
+
+    // ── Notification controls ────────────────────────────────────────────────
+    const toggleReminders = async () => {
+      if (!('Notification' in window)) { showToast('Navegador não suporta notificações'); return; }
+      if (remindersOn) {
+        setRemindersOn(false);
+        localStorage.setItem('remindersEnabled', 'false');
+        showToast('Notificações desativadas', '🔕');
+        return;
+      }
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        setRemindersOn(true);
+        localStorage.setItem('remindersEnabled', 'true');
+        showToast('Notificações ativadas!', '🔔');
+      } else {
+        showToast('Permissão negada');
+        setShowNotifHelp(true);
+      }
+    };
+
+    const testNotif = () => {
+      if (Notification.permission !== 'granted') { setShowNotifHelp(true); return; }
+      try {
+        new Notification('Teste ✨', { body: 'Está funcionando! Você vai lembrar dos remédios 💊', icon: '/icon-192.svg' });
+        showToast('Teste enviado!', '🔔');
+      } catch (_) { showToast('Não consegui testar aqui'); }
+    };
+
+    const handleInstall = async () => {
+      const dp = dpRef.current;
+      if (!dp) { setShowInstall(true); return; }
+      dp.prompt();
+      try { await dp.userChoice; } catch (_) {}
+      dpRef.current = null;
+      setCanInstall(false);
+    };
+
+    // ── Calendar export ──────────────────────────────────────────────────────
+    const exportCalendar = () => {
+      const now = new Date();
+      const horizon = new Date(now); horizon.setDate(horizon.getDate() + 30);
+      const pad = n => String(n).padStart(2,'0');
+      const fmt = d => `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+      const freqMin = m => {
+        if (m.customSchedule) return 12 * 60;
+        const f = (m.frequency || '').toLowerCase();
+        const n = parseInt((f.match(/\d+/) || [0])[0]);
+        if (!n) return null;
+        if (f.includes('hora')) return n * 60;
+        if (f.includes('dia')) return n * 24 * 60;
+        if (f.includes('semana')) return n * 7 * 24 * 60;
+        if (f.includes('mês') || f.includes('mes')) return n * 30 * 24 * 60;
+        return null;
+      };
+      let events = '', total = 0;
+      medications.forEach(m => {
+        if (!m.nextDue) return;
+        const interval = freqMin(m);
+        if (!interval) return;
+        let d = new Date(m.nextDue);
+        if (d < now) d = new Date(now);
+        let g = 0;
+        while (d <= horizon && g < 500 && total < 800) {
+          const s = new Date(d), e2 = new Date(d); e2.setMinutes(e2.getMinutes() + 5);
+          events += ['BEGIN:VEVENT', `UID:${m.id}-${s.getTime()}@remedios`, `DTSTAMP:${fmt(now)}`, `DTSTART:${fmt(s)}`, `DTEND:${fmt(e2)}`, `SUMMARY:💊 ${m.name} (${m.dosage})`, `DESCRIPTION:${m.name} — ${m.dosage}`, 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:Hora do remédio!', 'TRIGGER:-PT10M', 'END:VALARM', 'END:VEVENT'].join('\r\n') + '\r\n';
+          total++; g++; d = new Date(d.getTime() + interval * 60000);
         }
-      };
-
-      // Função para adicionar eventos ao histórico
-      const addToHistory = (message) => {
-        const historyItem = {
-          id: Date.now().toString(),
-          date: new Date().toISOString(),
-          message,
-        };
-        
-        setHistory([historyItem, ...history]);
-      };
-
-      // Função para calcular a próxima data com base na frequência
-      const calculateNextDue = (date, frequency, doseTime = null) => {
-        const nextDate = new Date(date);
-        
-        // Se for dose personalizada (manhã/noite)
-        if (doseTime) {
-          // Configurar próxima dose para exatamente 12 horas depois
-          nextDate.setHours(nextDate.getHours() + 12);
-          return nextDate.toISOString();
-        }
-        
-        // Cálculo normal para frequências padrão
-        if (frequency.includes('hora')) {
-          const hours = parseInt(frequency.match(/\d+/)[0]);
-          nextDate.setHours(nextDate.getHours() + hours);
-        } else if (frequency.includes('dia')) {
-          const days = parseInt(frequency.match(/\d+/)[0]);
-          nextDate.setDate(nextDate.getDate() + days);
-        } else if (frequency.includes('semana')) {
-          const weeks = parseInt(frequency.match(/\d+/)[0]);
-          nextDate.setDate(nextDate.getDate() + (weeks * 7));
-        } else if (frequency.includes('mês')) {
-          const months = parseInt(frequency.match(/\d+/)[0]);
-          nextDate.setMonth(nextDate.getMonth() + months);
-        }
-        
-        return nextDate.toISOString();
-      };
-
-      // Função auxiliar para formatar datas
-      const formatDate = (date) => {
-        if (!date) return 'Nunca';
-        
-        if (typeof date === 'string') {
-          date = new Date(date);
-        }
-        
-        return new Intl.DateTimeFormat('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }).format(date);
-      };
-
-      // Verificar se um medicamento está com estoque baixo
-      const isLowStock = (medication) => {
-        return medication.stock <= medication.alertThreshold;
-      };
-
-      // Verificar se um medicamento está atrasado para ser tomado
-      const isOverdue = (medication) => {
-        if (!medication.nextDue) return false;
-        
-        const now = new Date();
-        const nextDue = new Date(medication.nextDue);
-        
-        return nextDue < now;
-      };
-
-      // Ordenar medicamentos (atrasados primeiro, depois com estoque baixo)
-      const sortedMedications = [...medications].sort((a, b) => {
-        if (isOverdue(a) && !isOverdue(b)) return -1;
-        if (!isOverdue(a) && isOverdue(b)) return 1;
-        if (isLowStock(a) && !isLowStock(b)) return -1;
-        if (!isLowStock(a) && isLowStock(b)) return 1;
-        return 0;
       });
+      if (!events) { showToast('Nenhum horário para exportar'); return; }
+      const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Remedios//PT-BR//','CALSCALE:GREGORIAN', events.trim(), 'END:VCALENDAR'].join('\r\n');
+      const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+      const a = document.createElement('a'); a.href = url; a.download = 'lembretes-medicamentos.ics';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      showToast('Calendário exportado! Importe no celular 📅', '📅');
+    };
 
-      return (
-        <div style={styles.container}>
-          {/* Notificação */}
-          {notification.show && (
-            <div className={`notification ${notification.show ? 'show' : ''}`}>
-              {notification.message}
-            </div>
-          )}
+    // ── Medication CRUD ──────────────────────────────────────────────────────
+    const handleAdd = e => {
+      e.preventDefault();
+      if (!newMed.name || !newMed.dosage || newMed.stock <= 0) { showToast('Preencha todos os campos!'); return; }
+      if (newMed.customSchedule && newMed.morningDose <= 0 && newMed.eveningDose <= 0) { showToast('Especifique pelo menos uma dose!'); return; }
+      if (!newMed.customSchedule && !newMed.frequency) { showToast('Especifique a frequência!'); return; }
+      const now = new Date();
+      let nextDue;
+      if (newMed.customSchedule) {
+        const h = now.getHours();
+        if (h < 12 && newMed.morningDose > 0) nextDue = calcNext(now, '', 'morning');
+        else if (newMed.eveningDose > 0) nextDue = calcNext(now, '', 'evening');
+        else { const t = new Date(now); t.setDate(t.getDate()+1); t.setHours(8,0,0); nextDue = t.toISOString(); }
+      } else { nextDue = calcNext(now, newMed.frequency); }
+      const med = { ...newMed, id: Date.now().toString(), nextDue, lastNotified: null };
+      setMedications(p => [...p, med]);
+      addHist(`Medicamento ${med.name} adicionado com estoque inicial de ${fmtDose(med.stock)} unidades.`);
+      showToast(`${med.name} adicionado!`, '💊');
+      setNewMed(emptyMed);
+      setActiveTab('medicines');
+    };
 
+    const openEdit = id => {
+      const m = medications.find(x => x.id === id);
+      if (m) { setEditMed({ ...m }); setShowEdit(true); }
+    };
 
-          {/* Ajuda: instalar como app */}
-          {showInstallHelp && (
-            <div className="modal-backdrop" role="dialog" aria-modal="true">
-              <div className="modal-content">
-                <h3 style={{marginTop: 0}}>Instalar como app (PWA)</h3>
-                <p style={{marginTop: 6}}>
-                  Em alguns navegadores (principalmente iPhone/Safari) não aparece um botão de “instalar”.
-                  Você instala pelo menu do navegador:
-                </p>
-                <ul style={{lineHeight: 1.5}}>
-                  <li><b>iPhone (Safari)</b>: botão <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b></li>
-                  <li><b>Android (Chrome)</b>: menu <b>⋮</b> → <b>Instalar app</b> / <b>Adicionar à tela inicial</b></li>
-                  <li><b>Computador</b>: procure o ícone de instalação na barra de endereço (quando disponível)</li>
-                </ul>
-                <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop: 16}}>
-                  <button style={{...styles.button}} onClick={() => setShowInstallHelp(false)}>Fechar</button>
-                </div>
-              </div>
-            </div>
-          )}
+    const saveEdit = () => {
+      if (!editMed.name || !editMed.dosage) { showToast('Preencha os campos!'); return; }
+      if (editMed.customSchedule && editMed.morningDose <= 0 && editMed.eveningDose <= 0) { showToast('Especifique pelo menos uma dose!'); return; }
+      if (!editMed.customSchedule && !editMed.frequency) { showToast('Especifique a frequência!'); return; }
+      setMedications(p => p.map(m => m.id === editMed.id ? editMed : m));
+      addHist(`Medicamento ${editMed.name} foi editado.`);
+      showToast(`${editMed.name} atualizado!`, '✏️');
+      setShowEdit(false);
+    };
 
-          {/* Ajuda: liberar notificações */}
-          {showNotifHelp && (
-            <div className="modal-backdrop" role="dialog" aria-modal="true">
-              <div className="modal-content">
-                <h3 style={{marginTop: 0}}>Como liberar notificações</h3>
-                <p style={{marginTop: 6}}>
-                  A permissão está como <b>negada</b>. Para permitir:
-                </p>
-                <ul style={{lineHeight: 1.5}}>
-                  <li><b>Chrome</b>: clique no <b>cadeado</b> ao lado do endereço → <b>Notificações</b> → <b>Permitir</b></li>
-                  <li><b>Safari (Mac)</b>: Ajustes do Safari → <b>Websites</b> → <b>Notificações</b> → permitir para este site</li>
-                  <li><b>iPhone</b>: as notificações funcionam melhor se o app estiver <b>instalado</b> na Tela de Início</li>
-                </ul>
-                <p style={{marginTop: 10}}>
-                  Depois, atualize a página e clique em <b>Ativar lembretes</b> novamente.
-                </p>
-                <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop: 16}}>
-                  <button style={{...styles.button, backgroundColor:'var(--primary-light)'}} onClick={() => { setShowNotifHelp(false); setShowInstallHelp(true); }}>Ver como instalar</button>
-                  <button style={{...styles.button}} onClick={() => setShowNotifHelp(false)}>Fechar</button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div style={styles.header}>
-  <div style={styles.headerTitleArea}>
-    <h1 style={{margin: 0}}>Controle de Medicamentos</h1>
-    <p style={{margin: '6px 0 0 0', fontSize: '13px', color: '#6a0dad'}}>
-    </p>
-  </div>
+    const openTake = id => {
+      const m = medications.find(x => x.id === id);
+      setDoseMedId(id);
+      if (m.customSchedule) { setShowDose(true); setDoseTime(''); setCustomTime(''); }
+      else handleTake(id, null, null, null);
+    };
 
-  <div style={styles.headerActions}>
-    <button
-      type="button"
-      style={{...styles.button, ...styles.smallButton}}
-      onClick={toggleReminders}
-      title="Ativa lembretes enquanto o app estiver aberto"
-    >
-      {remindersEnabled ? '🔕 Desativar lembretes' : '🔔 Ativar lembretes'}
-    </button>
+    const handleTake = (id, slot, cTime, ev) => {
+      const now = cTime && cTime !== '' ? new Date(cTime) : new Date();
+      if (ev) spawnSparkles(ev.clientX, ev.clientY);
+      else spawnSparkles(window.innerWidth / 2, window.innerHeight / 2);
+      setMedications(p => p.map(m => {
+        if (m.id !== id) return m;
+        let amt = 1, desc = '';
+        if (m.customSchedule && slot) {
+          if (slot === 'morning') { amt = m.morningDose; desc = ` (Dose da manhã: ${fmtDose(amt)} comprimido${amt !== 1 ? 's' : ''})`; }
+          if (slot === 'evening') { amt = m.eveningDose; desc = ` (Dose da noite: ${fmtDose(amt)} comprimido${amt !== 1 ? 's' : ''})`; }
+        }
+        const next = calcNext(now, m.frequency, slot);
+        const ns = m.stock - amt;
+        addHist(`${m.name} foi tomado em ${fmtDate(now)}${desc}. Estoque restante: ${fmtDose(ns)} unidades.`);
+        const msg = DOSE_MSGS[Math.floor(Math.random() * DOSE_MSGS.length)];
+        showToast(msg, '💊');
+        return { ...m, lastTaken: now.toISOString(), nextDue: next, stock: ns };
+      }));
+      setShowDose(false); setCustomTime('');
+    };
 
-    <button
-      type="button"
-      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--white)', color: 'var(--primary)', border: '1px solid rgba(106,13,173,0.35)'}}
-      onClick={handleInstallClick}
-      title="Instalar como app (PWA)"
-    >
-      📲 Instalar app
-    </button>
+    const openStock = id => { setStockId(id); setStockAmt(''); setShowStock(true); };
 
-    <button
-      type="button"
-      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--white)', color: 'var(--primary)', border: '1px solid rgba(106,13,173,0.35)'}}
-      onClick={testNotification}
-      title="Dispara uma notificação de teste"
-    >
-      🧪 Testar
-    </button>
+    const addStock = () => {
+      const n = parseFloat(stockAmt);
+      if (isNaN(n) || n <= 0) { showToast('Digite um número válido!'); return; }
+      setMedications(p => p.map(m => {
+        if (m.id !== stockId) return m;
+        const ns = m.stock + n;
+        addHist(`Adicionadas ${fmtDose(n)} unidades de ${m.name} ao estoque. Novo total: ${fmtDose(ns)} unidades.`);
+        showToast(`Estoque de ${m.name} atualizado!`, '📦');
+        return { ...m, stock: ns };
+      }));
+      setShowStock(false);
+    };
 
-    <button
-      type="button"
-      style={{...styles.button, ...styles.smallButton, backgroundColor: 'var(--primary-light)'}}
-      onClick={downloadCalendarIcs}
-      title="Gera um arquivo .ics para importar no calendário do celular"
-    >
-      📅 Exportar calendário
-    </button>
-  </div>
-</div>
-          
-          <div style={styles.tabs}>
-            <div 
-              style={{...styles.tab, ...(activeTab === 'medicines' ? styles.activeTab : {})}} 
-              onClick={() => setActiveTab('medicines')}
-            >
-              Medicamentos
-            </div>
-            <div 
-              style={{...styles.tab, ...(activeTab === 'add' ? styles.activeTab : {})}} 
-              onClick={() => setActiveTab('add')}
-            >
-              Adicionar Novo
-            </div>
-            <div 
-              style={{...styles.tab, ...(activeTab === 'history' ? styles.activeTab : {})}} 
-              onClick={() => setActiveTab('history')}
-            >
-              Histórico
+    const removeMed = id => {
+      const m = medications.find(x => x.id === id);
+      if (!m || !window.confirm(`Remover ${m.name}?`)) return;
+      setMedications(p => p.filter(x => x.id !== id));
+      addHist(`Medicamento ${m.name} foi removido da lista.`);
+      showToast(`${m.name} removido`);
+    };
+
+    const clearHistory = () => {
+      setHistory([{ id: Date.now().toString(), date: new Date().toISOString(), message: 'Histórico foi limpo.' }]);
+      setShowClear(false);
+      showToast('Histórico limpo');
+    };
+
+    // ── History helpers ──────────────────────────────────────────────────────
+    const groupByDate = items => {
+      const g = {};
+      items.forEach(i => {
+        const d = new Date(i.date);
+        const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        if (!g[k]) g[k] = [];
+        g[k].push(i);
+      });
+      return Object.keys(g).sort((a,b) => {
+        const [ya,ma,da] = a.split('-').map(Number);
+        const [yb,mb,db] = b.split('-').map(Number);
+        return new Date(yb,mb,db) - new Date(ya,ma,da);
+      }).reduce((r,k) => { r[k] = g[k]; return r; }, {});
+    };
+
+    const fmtDateKey = k => {
+      const [y,m,d] = k.split('-').map(Number);
+      const today = new Date(); const yest = new Date(today); yest.setDate(yest.getDate()-1);
+      const tk = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+      const yk = `${yest.getFullYear()}-${yest.getMonth()}-${yest.getDate()}`;
+      if (k === tk) return 'Hoje';
+      if (k === yk) return 'Ontem';
+      return new Intl.DateTimeFormat('pt-BR', { day:'2-digit', month:'long', year:'numeric' }).format(new Date(y,m,d));
+    };
+
+    const fmtTime = s => new Intl.DateTimeFormat('pt-BR', { hour:'2-digit', minute:'2-digit' }).format(new Date(s));
+
+    const actType = msg => {
+      if (msg.includes('adicionado com estoque')) return 'Add';
+      if (msg.includes('foi tomado')) return 'Take';
+      if (msg.includes('Adicionadas')) return 'Stock';
+      if (msg.includes('removido')) return 'Remove';
+      if (msg.includes('limpo')) return 'Clear';
+      if (msg.includes('editado')) return 'Edit';
+      return 'Other';
+    };
+    const actIcon = t => ({ Add:'➕', Take:'💊', Stock:'📦', Remove:'🗑️', Clear:'🧹', Edit:'✏️', Other:'📝' }[t] || '📝');
+
+    const fmtMsg = msg => msg
+      .replace(/\. Estoque restante: [\d\.]+( unidades)?\./, '.')
+      .replace(/Medicamento (.+) adicionado com estoque inicial de (.+) unidades\./, 'Adicionado $1 com $2 un.')
+      .replace(/(.+) foi tomado em (.+) \(Dose da (.+): (.+) comprimidos?\)/, '$1 — Dose da $3: $4')
+      .replace(/(.+) foi tomado em (.+)\./, 'Tomou $1')
+      .replace(/Adicionadas (.+) unidades de (.+) ao estoque\. Novo total: (.+) unidades\./, '$2: +$1 (total $3)')
+      .replace(/Medicamento (.+) foi editado\./, '$1 atualizado');
+
+    const sorted = [...medications].sort((a,b) => {
+      if (isOverdue(a) && !isOverdue(b)) return -1;
+      if (!isOverdue(a) && isOverdue(b)) return 1;
+      if (isLow(a) && !isLow(b)) return -1;
+      if (!isLow(a) && isLow(b)) return 1;
+      return 0;
+    });
+
+    // ── Schedule form (shared between add & edit) ────────────────────────────
+    const ScheduleForm = ({ med, onChange }) => (
+      <div>
+        <div style={{ marginBottom: 14 }}>
+          <span className="lbl" style={{ marginBottom: 8 }}>Tipo de Programação</span>
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
+            {[{ v: false, l: '⏱️ Frequência regular' }, { v: true, l: '🌅 Manhã e Noite' }].map(o => (
+              <label key={String(o.v)} className={`radio-pill ${med.customSchedule === o.v ? 'on' : ''}`}>
+                <input type="radio" style={{ display:'none' }} checked={med.customSchedule === o.v} onChange={() => onChange({ ...med, customSchedule: o.v })} />
+                {o.l}
+              </label>
+            ))}
+          </div>
+        </div>
+        {!med.customSchedule ? (
+          <div style={{ marginBottom: 14 }}>
+            <label className="lbl">Frequência</label>
+            <input className="inp" type="text" value={med.frequency} onChange={e => onChange({ ...med, frequency: e.target.value })} placeholder="Ex: 8 horas, 1 dia, 1 semana" />
+          </div>
+        ) : (
+          <div style={{ border:'1px solid var(--border)', borderRadius:12, padding:14, marginBottom:14, background:'rgba(255,255,255,0.02)' }}>
+            <p style={{ color:'var(--primary)', fontSize:13, fontWeight:600, marginBottom:12 }}>Programação a cada 12 horas</p>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <div><label className="lbl">🌅 Dose da Manhã</label>
+                <input className="inp" type="number" value={med.morningDose} onChange={e => onChange({ ...med, morningDose: parseFloat(e.target.value)||0 })} min="0" step="0.5" /></div>
+              <div><label className="lbl">🌙 Dose da Noite</label>
+                <input className="inp" type="number" value={med.eveningDose} onChange={e => onChange({ ...med, eveningDose: parseFloat(e.target.value)||0 })} min="0" step="0.5" /></div>
             </div>
           </div>
-          
-          {activeTab === 'add' && (
-            <div style={styles.form}>
-              <h2>Adicionar Novo Medicamento</h2>
-              <form onSubmit={handleAddMedication}>
-                <div>
-                  <label htmlFor="name">Nome do Medicamento</label>
-                  <input
-                    id="name"
-                    type="text"
-                    style={styles.input}
-                    value={newMedication.name}
-                    onChange={(e) => setNewMedication({...newMedication, name: e.target.value})}
-                    placeholder="Ex: Paracetamol"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="dosage">Dosagem</label>
-                  <input
-                    id="dosage"
-                    type="text"
-                    style={styles.input}
-                    value={newMedication.dosage}
-                    onChange={(e) => setNewMedication({...newMedication, dosage: e.target.value})}
-                    placeholder="Ex: 500mg, 1 comprimido"
-                    required
-                  />
-                </div>
-                
-                <div style={{marginTop: '15px', marginBottom: '15px'}}>
-                  <label style={{fontWeight: 'bold'}}>Tipo de Programação</label>
-                  <div style={{display: 'flex', marginTop: '8px', gap: '10px'}}>
-                    <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                      <input
-                        type="radio"
-                        name="scheduleType"
-                        checked={!newMedication.customSchedule}
-                        onChange={() => setNewMedication({...newMedication, customSchedule: false})}
-                      />
-                      <span style={{marginLeft: '8px'}}>Padrão (frequência regular)</span>
-                    </label>
-                    <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                      <input
-                        type="radio"
-                        name="scheduleType"
-                        checked={newMedication.customSchedule}
-                        onChange={() => setNewMedication({...newMedication, customSchedule: true})}
-                      />
-                      <span style={{marginLeft: '8px'}}>Personalizado (manhã/noite)</span>
-                    </label>
-                  </div>
-                </div>
-                
-                {!newMedication.customSchedule ? (
-                  <div>
-                    <label htmlFor="frequency">Frequência</label>
-                    <input
-                      id="frequency"
-                      type="text"
-                      style={styles.input}
-                      value={newMedication.frequency}
-                      onChange={(e) => setNewMedication({...newMedication, frequency: e.target.value})}
-                      placeholder="Ex: 8 horas, 1 dia, 1 semana"
-                      required={!newMedication.customSchedule}
-                    />
-                  </div>
-                ) : (
-                  <div style={{border: '1px solid var(--primary-light)', borderRadius: '5px', padding: '10px', marginBottom: '15px'}}>
-                    <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária (a cada 12 horas)</p>
-                    
-                    <div>
-                      <label htmlFor="morningDose">Dose da Manhã (comprimidos)</label>
-                      <input
-                        id="morningDose"
-                        type="number"
-                        style={styles.input}
-                        value={newMedication.morningDose}
-                        onChange={(e) => setNewMedication({...newMedication, morningDose: parseFloat(e.target.value) || 0})}
-                        min="0"
-                        step="0.5"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="eveningDose">Dose da Noite (comprimidos)</label>
-                      <input
-                        id="eveningDose"
-                        type="number"
-                        style={styles.input}
-                        value={newMedication.eveningDose}
-                        onChange={(e) => setNewMedication({...newMedication, eveningDose: parseFloat(e.target.value) || 0})}
-                        min="0"
-                        step="0.5"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <div>
-                  <label htmlFor="stock">Estoque Inicial</label>
-                  <input
-                    id="stock"
-                    type="number"
-                    style={styles.input}
-                    value={newMedication.stock}
-                    onChange={(e) => setNewMedication({...newMedication, stock: parseFloat(e.target.value) || 0})}
-                    min="0.5"
-                    step="0.5"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="alertThreshold">Alerta de Estoque Baixo</label>
-                  <input
-                    id="alertThreshold"
-                    type="number"
-                    style={styles.input}
-                    value={newMedication.alertThreshold}
-                    onChange={(e) => setNewMedication({...newMedication, alertThreshold: parseFloat(e.target.value) || 0})}
-                    min="0.5"
-                    step="0.5"
-                  />
-                </div>
-                
-                <button type="submit" style={styles.button}>Adicionar Medicamento</button>
-              </form>
-            </div>
-          )}
-          
-          {activeTab === 'medicines' && (
-            <div style={styles.medicineList}>
-              <h2>Lista de Medicamentos</h2>
-              
-              {sortedMedications.length === 0 ? (
-                <p>Nenhum medicamento cadastrado. Use a aba "Adicionar Novo" para cadastrar medicamentos.</p>
-              ) : (
-                sortedMedications.map(medication => (
-                  <div key={medication.id} style={styles.medicationCard}>
-                    <h3>{medication.name}</h3>
-                    <p><strong>Dosagem:</strong> {medication.dosage}</p>
-                    
-                    {medication.customSchedule ? (
-                      <div style={styles.dosageSchedule}>
-                        <p><strong>Programação Personalizada (a cada 12 horas):</strong></p>
-                        {medication.morningDose > 0 && (
-                          <div style={styles.dosageTime}>
-                            Manhã: {formatDose(medication.morningDose)} comprimido{medication.morningDose !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                        {medication.eveningDose > 0 && (
-                          <div style={styles.dosageTime}>
-                            Noite: {formatDose(medication.eveningDose)} comprimido{medication.eveningDose !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <p><strong>Frequência:</strong> {medication.frequency}</p>
-                    )}
-                    
-                    <p>
-                      <strong>Estoque:</strong> 
-                      <span style={isLowStock(medication) ? styles.lowStock : {}}>
-                        {formatDose(medication.stock)} unidades
-                        {isLowStock(medication) && ' (Estoque Baixo)'}
-                      </span>
-                    </p>
-                    <p><strong>Última vez tomado:</strong> {formatDate(medication.lastTaken)}</p>
-                    <p>
-                      <strong>Próxima dose prevista:</strong> 
-                      <span style={isOverdue(medication) ? styles.lowStock : {}}>
-                        {formatDate(medication.nextDue)}
-                        {isOverdue(medication) && ' (Atrasado)'}
-                      </span>
-                    </p>
-                    
-                    <div>
-                      <button 
-                        style={{
-                          ...styles.button,
-                          ...(medication.stock <= 0 ? styles.disabledButton : {})
-                        }} 
-                        onClick={() => openTakeMedicationModal(medication.id)}
-                        disabled={medication.stock <= 0}
-                      >
-                        Registrar Dose
-                      </button>
-                      
-                      <button 
-                        style={{...styles.button, ...styles.warningButton}} 
-                        onClick={() => openAddStockModal(medication.id)}
-                      >
-                        Adicionar Estoque
-                      </button>
-                      
-                      {/* Novo botão de Editar */}
-                      <button 
-                        style={{...styles.button, ...styles.editButton}} 
-                        onClick={() => openEditModal(medication.id)}
-                      >
-                        Editar
-                      </button>
-                      
-                      <button 
-                        style={{...styles.button, ...styles.dangerButton}} 
-                        onClick={() => handleRemoveMedication(medication.id)}
-                      >
-                        Remover
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-          
-          {activeTab === 'history' && (
-            <div>
-              <div style={styles.historyHeader}>
-                <h2>Histórico de Atividades</h2>
-                {history.length > 0 && (
-                  <button 
-                    style={styles.clearHistoryButton}
-                    onClick={() => setShowClearHistoryModal(true)}
-                  >
-                    Limpar Histórico
-                  </button>
-                )}
-              </div>
-              
-              {/* Legenda dos ícones */}
-              <div style={styles.legendContainer}>
-                <h4 style={styles.legendTitle}>Legenda:</h4>
-                <div style={styles.legendItems}>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconAdd}}>➕</span>
-                    <span style={styles.legendText}>Adição de medicamento</span>
-                  </div>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconTake}}>💊</span>
-                    <span style={styles.legendText}>Dose tomada</span>
-                  </div>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconStock}}>📦</span>
-                    <span style={styles.legendText}>Estoque adicionado</span>
-                  </div>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconRemove}}>🗑️</span>
-                    <span style={styles.legendText}>Medicamento removido</span>
-                  </div>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconClear}}>🧹</span>
-                    <span style={styles.legendText}>Histórico limpo</span>
-                  </div>
-                  <div style={styles.legendItem}>
-                    <span style={{...styles.historyIcon, ...styles.historyIconEdit}}>✏️</span>
-                    <span style={styles.legendText}>Medicamento editado</span>
-                  </div>
-                </div>
-              </div>
-              
-              {history.length === 0 ? (
-                <p>Nenhuma atividade registrada.</p>
-              ) : (
-                <div style={styles.historyContainer}>
-                  {/* Agrupamento por data */}
-                  {Object.entries(groupHistoryByDate(history)).map(([date, items]) => (
-                    <div key={date} style={styles.historyDateGroup}>
-                      <div style={styles.historyDateHeader}>
-                        <span>{formatHistoryDate(date)}</span>
-                      </div>
-                      
-                      {items.map(item => {
-                        // Determina o tipo de atividade para mostrar ícone apropriado
-                        const activityType = determineActivityType(item.message);
-                        const icon = getActivityIcon(activityType);
-                        
-                        return (
-                          <div key={item.id} style={styles.historyItem}>
-                            <div style={styles.historyTime}>
-                              {formatHistoryTime(item.date)}
-                            </div>
-                            <div style={styles.historyIconContainer}>
-                              <span style={{...styles.historyIcon, ...styles[`historyIcon${activityType}`]}}>
-                                {icon}
-                              </span>
-                            </div>
-                            <div style={styles.historyContent}>
-                              {formatHistoryMessage(item.message)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Modal para adicionar estoque */}
-          {showStockModal && (
-            <div className="modal-backdrop fadeIn">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h3>Adicionar Estoque</h3>
-                </div>
-                <div>
-                  <label htmlFor="stockAmount">Quantidade a adicionar:</label>
-                  <input
-                    id="stockAmount"
-                    type="number"
-                    style={styles.input}
-                    value={stockAmount}
-                    onChange={(e) => setStockAmount(e.target.value)}
-                    placeholder="Digite a quantidade"
-                    min="0.5"
-                    step="0.5"
-                    autoFocus
-                  />
-                </div>
-                <div className="modal-footer">
-                  <button 
-                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
-                    onClick={() => setShowStockModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    style={styles.modalButton} 
-                    onClick={handleAddStock}
-                  >
-                    Confirmar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Modal para seleção de dose (manhã/noite) */}
-          {showDoseModal && (
-            <div className="modal-backdrop fadeIn">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h3>Registrar Dose</h3>
-                </div>
-                <div>
-                  <p>Selecione o horário da dose:</p>
-                  <div style={{display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap'}}>
-                    <div
-                      style={{
-                        ...styles.doseTimeButton,
-                        ...(selectedDoseTime === 'morning' ? styles.selectedDoseTimeButton : {})
-                      }}
-                      onClick={() => setSelectedDoseTime('morning')}
-                    >
-                      Dose da Manhã
-                    </div>
-                    <div
-                      style={{
-                        ...styles.doseTimeButton,
-                        ...(selectedDoseTime === 'evening' ? styles.selectedDoseTimeButton : {})
-                      }}
-                      onClick={() => setSelectedDoseTime('evening')}
-                    >
-                      Dose da Noite
-                    </div>
-                  </div>
-                  
-                  {/* Campo para horário retroativo */}
-                  <div style={{marginTop: '15px'}}>
-                    <label htmlFor="customDoseTime" style={{display: 'block', marginBottom: '5px'}}>
-                      Hora que foi tomado: <span style={{fontSize: '13px', color: '#666'}}>(opcional)</span>
-                    </label>
-                    <input
-                      id="customDoseTime"
-                      type="datetime-local"
-                      style={styles.input}
-                      value={customDoseTime}
-                      onChange={(e) => setCustomDoseTime(e.target.value)}
-                      max={new Date().toISOString().slice(0, 16)}
-                    />
-                    <p style={{fontSize: '13px', color: '#666', margin: '5px 0 0 0'}}>
-                      Se não preenchido, será considerado o horário atual.
-                    </p>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button 
-                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
-                    onClick={() => setShowDoseModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    style={{
-                      ...styles.modalButton,
-                      ...(selectedDoseTime === '' ? styles.disabledButton : {})
-                    }} 
-                    onClick={() => handleTakeMedication(selectedMedicationId, selectedDoseTime, customDoseTime)}
-                    disabled={selectedDoseTime === ''}
-                  >
-                    Confirmar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Modal para confirmação de limpar histórico */}
-          {showClearHistoryModal && (
-            <div className="modal-backdrop fadeIn">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h3>Limpar Histórico</h3>
-                </div>
-                <div>
-                  <p>Tem certeza que deseja limpar todo o histórico de atividades?</p>
-                  <p>Esta ação não pode ser desfeita.</p>
-                </div>
-                <div className="modal-footer">
-                  <button 
-                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
-                    onClick={() => setShowClearHistoryModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    style={{...styles.modalButton, ...styles.dangerButton}}
-                    onClick={handleClearHistory}
-                  >
-                    Limpar Histórico
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* NOVO Modal para editar medicamento */}
-          {showEditModal && editingMedication && (
-            <div className="modal-backdrop fadeIn">
-              <div className="modal-content" style={{maxWidth: '500px'}}>
-                <div className="modal-header">
-                  <h3>Editar Medicamento</h3>
-                </div>
-                <div>
-                  <div>
-                    <label htmlFor="editName">Nome do Medicamento</label>
-                    <input
-                      id="editName"
-                      type="text"
-                      style={styles.input}
-                      value={editingMedication.name}
-                      onChange={(e) => setEditingMedication({...editingMedication, name: e.target.value})}
-                      placeholder="Ex: Paracetamol"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="editDosage">Dosagem</label>
-                    <input
-                      id="editDosage"
-                      type="text"
-                      style={styles.input}
-                      value={editingMedication.dosage}
-                      onChange={(e) => setEditingMedication({...editingMedication, dosage: e.target.value})}
-                      placeholder="Ex: 500mg, 1 comprimido"
-                      required
-                    />
-                  </div>
-                  
-                  <div style={{marginTop: '15px', marginBottom: '15px'}}>
-                    <label style={{fontWeight: 'bold'}}>Tipo de Programação</label>
-                    <div style={{display: 'flex', marginTop: '8px', gap: '10px'}}>
-                      <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                        <input
-                          type="radio"
-                          name="editScheduleType"
-                          checked={!editingMedication.customSchedule}
-                          onChange={() => setEditingMedication({...editingMedication, customSchedule: false})}
-                        />
-                        <span style={{marginLeft: '8px'}}>Padrão (frequência regular)</span>
-                      </label>
-                      <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                        <input
-                          type="radio"
-                          name="editScheduleType"
-                          checked={editingMedication.customSchedule}
-                          onChange={() => setEditingMedication({...editingMedication, customSchedule: true})}
-                        />
-                        <span style={{marginLeft: '8px'}}>Personalizado (manhã/noite)</span>
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {!editingMedication.customSchedule ? (
-                    <div>
-                      <label htmlFor="editFrequency">Frequência</label>
-                      <input
-                        id="editFrequency"
-                        type="text"
-                        style={styles.input}
-                        value={editingMedication.frequency}
-                        onChange={(e) => setEditingMedication({...editingMedication, frequency: e.target.value})}
-                        placeholder="Ex: 8 horas, 1 dia, 1 semana"
-                        required={!editingMedication.customSchedule}
-                      />
-                    </div>
-                  ) : (
-                    <div style={{border: '1px solid var(--primary-light)', borderRadius: '5px', padding: '10px', marginBottom: '15px'}}>
-                      <p style={{marginTop: '0', marginBottom: '10px', fontWeight: 'bold'}}>Programação Diária (a cada 12 horas)</p>
-                      
-                      <div>
-                        <label htmlFor="editMorningDose">Dose da Manhã (comprimidos)</label>
-                        <input
-                          id="editMorningDose"
-                          type="number"
-                          style={styles.input}
-                          value={editingMedication.morningDose}
-                          onChange={(e) => setEditingMedication({...editingMedication, morningDose: parseFloat(e.target.value) || 0})}
-                          min="0"
-                          step="0.5"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="editEveningDose">Dose da Noite (comprimidos)</label>
-                        <input
-                          id="editEveningDose"
-                          type="number"
-                          style={styles.input}
-                          value={editingMedication.eveningDose}
-                          onChange={(e) => setEditingMedication({...editingMedication, eveningDose: parseFloat(e.target.value) || 0})}
-                          min="0"
-                          step="0.5"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label htmlFor="editAlertThreshold">Alerta de Estoque Baixo</label>
-                    <input
-                      id="editAlertThreshold"
-                      type="number"
-                      style={styles.input}
-                      value={editingMedication.alertThreshold}
-                      onChange={(e) => setEditingMedication({...editingMedication, alertThreshold: parseFloat(e.target.value) || 0})}
-                      min="0.5"
-                      step="0.5"
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button 
-                    style={{...styles.modalButton, ...styles.modalCancelButton}} 
-                    onClick={() => setShowEditModal(false)}
-                  >
-                    Cancelar
-                  </button>
-                  <button 
-                    style={styles.modalButton} 
-                    onClick={handleSaveEdit}
-                  >
-                    Salvar Alterações
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
+        )}
+      </div>
+    );
 
-    // Renderizar o App no elemento root
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
+    // ── Render ───────────────────────────────────────────────────────────────
+    return (
+      <div style={{ maxWidth: 800, margin: '0 auto', padding: '22px 16px 40px' }}>
+
+        {/* Sparkles */}
+        {sparkles.map(s => (
+          <span key={s.id} className="sparkle" style={{ left: s.x, top: s.y }}>{s.e}</span>
+        ))}
+
+        {/* Toast */}
+        <div className={`toast ${toast.show ? 'show' : ''}`}>
+          {toast.emoji} {toast.msg}
+        </div>
+
+        {/* ── Header ── */}
+        <header style={{ marginBottom: 28 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:14, marginBottom:14 }}>
+            <div>
+              <h1 style={{ fontFamily:"'Playfair Display', serif", fontSize:26, fontWeight:700, lineHeight:1.2, marginBottom:8 }}>
+                <span className="grad">Remédios da Livia</span> ✨
+              </h1>
+              <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+                <span className="badge badge-era" style={{ color: era.color, borderColor: `${era.color}38` }}>
+                  {era.emoji} {era.name}
+                </span>
+                {streak > 0 && (
+                  <span className="badge badge-streak">
+                    🔥 {streak} dia{streak !== 1 ? 's' : ''} seguido{streak !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              {nextEra && (
+                <div style={{ marginTop: 8, maxWidth: 240 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text-muted)', marginBottom:3 }}>
+                    <span>Próxima: {nextEra.emoji} {nextEra.name}</span>
+                    <span>{streak}/{nextEra.minDays}d</span>
+                  </div>
+                  <div className="prog-track">
+                    <div className="prog-fill" style={{ width: `${Math.min(100, (streak / nextEra.minDays) * 100)}%` }} />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display:'flex', flexWrap:'wrap', gap:7, alignSelf:'flex-start' }}>
+              <button className="btn btn-primary" onClick={toggleReminders}>
+                {remindersOn ? '🔕 Desativar' : '🔔 Ativar'} lembretes
+              </button>
+              <button className="btn btn-secondary" onClick={handleInstall}>📲 Instalar</button>
+              <button className="btn btn-secondary" onClick={testNotif}>🧪 Testar</button>
+              <button className="btn btn-secondary" style={{ color:'var(--fuchsia)', borderColor:'rgba(232,121,249,0.22)' }} onClick={exportCalendar}>📅 Calendário</button>
+            </div>
+          </div>
+
+          {!remindersOn && medications.length > 0 && (
+            <div className="banner">
+              <span>💡</span>
+              <span>Ative os lembretes e <strong>instale o app</strong> para receber notificações mesmo com o celular bloqueado. Use 📅 Calendário como backup confiável!</span>
+            </div>
+          )}
+        </header>
+
+        {/* ── Tabs ── */}
+        <div className="tab-bar">
+          {[['medicines','💊 Medicamentos'],['add','➕ Adicionar'],['history','📋 Histórico']].map(([id, lbl]) => (
+            <div key={id} className={`tab ${activeTab === id ? 'on' : ''}`} onClick={() => setActiveTab(id)}>{lbl}</div>
+          ))}
+        </div>
+
+        {/* ══════════════ MEDICAMENTOS ══════════════ */}
+        {activeTab === 'medicines' && (
+          <div className="fade-in">
+            {sorted.length === 0 ? (
+              <div className="glass empty">
+                <div className="empty-icon">💊</div>
+                <div className="empty-title">Nenhum medicamento ainda</div>
+                <p className="empty-sub" style={{ marginBottom:20 }}>Adicione seus remédios para começar a sua era de cuidados!</p>
+                <button className="btn btn-primary" onClick={() => setActiveTab('add')}>➕ Adicionar medicamento</button>
+              </div>
+            ) : sorted.map(m => (
+              <div key={m.id} className={`glass ${isOverdue(m) ? 'glass-pink' : ''} fade-in`} style={{ padding:20, marginBottom:16 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8, marginBottom:12 }}>
+                  <div>
+                    <h3 style={{ fontFamily:"'Playfair Display', serif", fontSize:19, fontWeight:600, marginBottom:3 }}>{m.name}</h3>
+                    <span style={{ fontSize:13, color:'var(--text-muted)' }}>{m.dosage}</span>
+                  </div>
+                  <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                    {isOverdue(m) && <span className="badge badge-overdue">⏰ Atrasado</span>}
+                    {isLow(m)     && <span className="badge badge-low">⚠️ Estoque baixo</span>}
+                  </div>
+                </div>
+
+                <div className="info-grid">
+                  {m.customSchedule ? (
+                    <>
+                      {m.morningDose > 0 && <div className="info-item"><span className="info-label">🌅 Manhã:</span><span style={{ color:'var(--primary)' }}>{fmtDose(m.morningDose)} comp.</span></div>}
+                      {m.eveningDose > 0 && <div className="info-item"><span className="info-label">🌙 Noite:</span><span style={{ color:'var(--primary)' }}>{fmtDose(m.eveningDose)} comp.</span></div>}
+                    </>
+                  ) : (
+                    <div className="info-item"><span className="info-label">⏱️ Frequência:</span><span style={{ color:'var(--primary)' }}>a cada {m.frequency}</span></div>
+                  )}
+                  <div className="info-item"><span className="info-label">📦 Estoque:</span><span style={{ color: isLow(m) ? 'var(--fuchsia)' : 'var(--text)' }}>{fmtDose(m.stock)} un.</span></div>
+                  <div className="info-item"><span className="info-label">✅ Última dose:</span><span>{fmtDate(m.lastTaken)}</span></div>
+                  <div className="info-item"><span className="info-label">⏰ Próxima:</span><span style={{ color: isOverdue(m) ? 'var(--pink)' : 'var(--text)' }}>{fmtDate(m.nextDue)}</span></div>
+                </div>
+
+                <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+                  <button className="btn btn-primary" onClick={e => openTake(m.id)} disabled={m.stock <= 0}>💊 Registrar Dose</button>
+                  <button className="btn btn-warning" onClick={() => openStock(m.id)}>📦 Estoque</button>
+                  <button className="btn btn-edit" onClick={() => openEdit(m.id)}>✏️ Editar</button>
+                  <button className="btn btn-danger" onClick={() => removeMed(m.id)}>🗑️</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ══════════════ ADICIONAR ══════════════ */}
+        {activeTab === 'add' && (
+          <div className="glass fade-in" style={{ padding:28 }}>
+            <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:22, color:'var(--primary)', marginBottom:24 }}>✨ Novo Medicamento</h2>
+            <form onSubmit={handleAdd}>
+              <div style={{ marginBottom:14 }}>
+                <label className="lbl">Nome do Medicamento</label>
+                <input className="inp" type="text" value={newMed.name} onChange={e => setNewMed({...newMed, name:e.target.value})} placeholder="Ex: Paracetamol" required />
+              </div>
+              <div style={{ marginBottom:14 }}>
+                <label className="lbl">Dosagem</label>
+                <input className="inp" type="text" value={newMed.dosage} onChange={e => setNewMed({...newMed, dosage:e.target.value})} placeholder="Ex: 500mg, 1 comprimido" required />
+              </div>
+              <ScheduleForm med={newMed} onChange={setNewMed} />
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:24 }}>
+                <div><label className="lbl">Estoque Inicial</label>
+                  <input className="inp" type="number" value={newMed.stock} onChange={e => setNewMed({...newMed, stock:parseFloat(e.target.value)||0})} min="0.5" step="0.5" required /></div>
+                <div><label className="lbl">Alerta Estoque Baixo</label>
+                  <input className="inp" type="number" value={newMed.alertThreshold} onChange={e => setNewMed({...newMed, alertThreshold:parseFloat(e.target.value)||0})} min="0" step="0.5" /></div>
+              </div>
+              <button type="submit" className="btn btn-primary" style={{ width:'100%', padding:'13px', fontSize:15 }}>
+                ✨ Adicionar Medicamento
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ══════════════ HISTÓRICO ══════════════ */}
+        {activeTab === 'history' && (
+          <div className="fade-in">
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:18 }}>
+              <h2 style={{ fontFamily:"'Playfair Display', serif", fontSize:22, color:'var(--primary)' }}>📋 Histórico</h2>
+              {history.length > 0 && <button className="btn btn-danger" style={{ fontSize:13 }} onClick={() => setShowClear(true)}>🧹 Limpar</button>}
+            </div>
+            {history.length === 0 ? (
+              <div className="glass empty">
+                <div className="empty-icon">📋</div>
+                <p className="empty-sub">Nenhuma atividade ainda.</p>
+              </div>
+            ) : Object.entries(groupByDate(history)).map(([k, items]) => (
+              <div key={k} className="glass" style={{ marginBottom:14, overflow:'hidden' }}>
+                <div style={{ padding:'9px 16px', background:'linear-gradient(135deg,rgba(168,85,247,0.18),rgba(236,72,153,0.12))', borderBottom:'1px solid var(--border)' }}>
+                  <span style={{ fontSize:13, fontWeight:600, color:'var(--primary)' }}>{fmtDateKey(k)}</span>
+                </div>
+                {items.map((item, idx) => {
+                  const t = actType(item.message);
+                  return (
+                    <div key={item.id} className="hist-item" style={{ borderBottom: idx < items.length-1 ? '1px solid var(--border)' : 'none' }}>
+                      <span className="hist-time">{fmtTime(item.date)}</span>
+                      <span className="hist-icon">{actIcon(t)}</span>
+                      <span className="hist-msg">{fmtMsg(item.message)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ══════════════ MODALS ══════════════ */}
+
+        {/* Stock */}
+        {showStock && (
+          <div className="modal-bg">
+            <div className="modal-box">
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--primary)', marginBottom:20 }}>📦 Adicionar Estoque</h3>
+              <div style={{ marginBottom:20 }}>
+                <label className="lbl">Quantidade a adicionar</label>
+                <input className="inp" type="number" value={stockAmt} onChange={e => setStockAmt(e.target.value)} placeholder="Digite a quantidade" min="0.5" step="0.5" autoFocus />
+              </div>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button className="btn btn-secondary" onClick={() => setShowStock(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={addStock}>Confirmar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Dose selection */}
+        {showDose && (
+          <div className="modal-bg">
+            <div className="modal-box">
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--primary)', marginBottom:18 }}>💊 Registrar Dose</h3>
+              <p style={{ color:'var(--text-muted)', fontSize:14, marginBottom:12 }}>Selecione o período:</p>
+              <div style={{ display:'flex', gap:10, marginBottom:20 }}>
+                {[{ v:'morning', l:'🌅 Dose da Manhã' },{ v:'evening', l:'🌙 Dose da Noite' }].map(o => (
+                  <button key={o.v} type="button" className={`dose-btn ${doseTime===o.v?'on':''}`} onClick={() => setDoseTime(o.v)}>{o.l}</button>
+                ))}
+              </div>
+              <div style={{ marginBottom:20 }}>
+                <label className="lbl">Horário em que foi tomado <span style={{ fontWeight:400, opacity:0.6 }}>(opcional)</span></label>
+                <input className="inp" type="datetime-local" value={customTime} onChange={e => setCustomTime(e.target.value)} max={new Date().toISOString().slice(0,16)} />
+                <p style={{ fontSize:12, color:'var(--text-muted)', marginTop:5 }}>Se não preenchido, usa o horário atual.</p>
+              </div>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button className="btn btn-secondary" onClick={() => setShowDose(false)}>Cancelar</button>
+                <button className="btn btn-primary" disabled={doseTime===''} onClick={e => handleTake(doseMedId, doseTime, customTime, e)}>Confirmar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clear history */}
+        {showClear && (
+          <div className="modal-bg">
+            <div className="modal-box">
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--pink)', marginBottom:14 }}>🧹 Limpar Histórico</h3>
+              <p style={{ color:'var(--text-muted)', marginBottom:6 }}>Tem certeza? Esta ação não pode ser desfeita.</p>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:22 }}>
+                <button className="btn btn-secondary" onClick={() => setShowClear(false)}>Cancelar</button>
+                <button className="btn btn-danger" onClick={clearHistory}>Limpar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit */}
+        {showEdit && editMed && (
+          <div className="modal-bg">
+            <div className="modal-box" style={{ maxWidth:500 }}>
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--primary)', marginBottom:20 }}>✏️ Editar Medicamento</h3>
+              <div style={{ marginBottom:14 }}>
+                <label className="lbl">Nome</label>
+                <input className="inp" type="text" value={editMed.name} onChange={e => setEditMed({...editMed, name:e.target.value})} />
+              </div>
+              <div style={{ marginBottom:14 }}>
+                <label className="lbl">Dosagem</label>
+                <input className="inp" type="text" value={editMed.dosage} onChange={e => setEditMed({...editMed, dosage:e.target.value})} />
+              </div>
+              <ScheduleForm med={editMed} onChange={setEditMed} />
+              <div style={{ marginBottom:20 }}>
+                <label className="lbl">Alerta Estoque Baixo</label>
+                <input className="inp" type="number" value={editMed.alertThreshold} onChange={e => setEditMed({...editMed, alertThreshold:parseFloat(e.target.value)||0})} min="0" step="0.5" />
+              </div>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+                <button className="btn btn-secondary" onClick={() => setShowEdit(false)}>Cancelar</button>
+                <button className="btn btn-primary" onClick={saveEdit}>Salvar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Install help */}
+        {showInstall && (
+          <div className="modal-bg">
+            <div className="modal-box">
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--primary)', marginBottom:14 }}>📲 Instalar como App</h3>
+              <p style={{ color:'var(--text-muted)', fontSize:14, marginBottom:12 }}>Instale para receber notificações mesmo com o celular bloqueado! ✨</p>
+              <ul style={{ color:'var(--text)', fontSize:13, lineHeight:2.1, paddingLeft:18 }}>
+                <li><b>iPhone (Safari):</b> botão Compartilhar → <b>Adicionar à Tela de Início</b></li>
+                <li><b>Android (Chrome):</b> menu ⋮ → <b>Instalar app</b></li>
+                <li><b>Computador:</b> ícone de instalação na barra de endereço</li>
+              </ul>
+              <p style={{ color:'var(--text-muted)', fontSize:13, marginTop:12 }}>💡 Dica: depois de instalar, use o botão <b>🔔 Ativar lembretes</b>.</p>
+              <div style={{ display:'flex', justifyContent:'flex-end', marginTop:20 }}>
+                <button className="btn btn-primary" onClick={() => setShowInstall(false)}>Entendi!</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Notif help */}
+        {showNotifHelp && (
+          <div className="modal-bg">
+            <div className="modal-box">
+              <h3 style={{ fontFamily:"'Playfair Display', serif", color:'var(--primary)', marginBottom:14 }}>🔔 Como liberar notificações</h3>
+              <ul style={{ color:'var(--text)', fontSize:13, lineHeight:2.1, paddingLeft:18 }}>
+                <li><b>Chrome:</b> clique no cadeado → Notificações → Permitir</li>
+                <li><b>Safari (Mac):</b> Ajustes → Websites → Notificações → Permitir</li>
+                <li><b>iPhone:</b> instale o app primeiro para melhor suporte</li>
+              </ul>
+              <p style={{ color:'var(--text-muted)', fontSize:13, marginTop:10 }}>Após liberar, atualize a página e clique em <b>Ativar lembretes</b>.</p>
+              <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:20 }}>
+                <button className="btn btn-secondary" onClick={() => { setShowNotifHelp(false); setShowInstall(true); }}>Como instalar</button>
+                <button className="btn btn-primary" onClick={() => setShowNotifHelp(false)}>Fechar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  ReactDOM.render(<App />, document.getElementById('root'));
+</script>
 </body>
 </html>

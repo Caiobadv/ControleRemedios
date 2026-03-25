@@ -1,12 +1,15 @@
 {
-  "name": "Controle de Remédios",
+  "name": "Remédios da Livia ✨",
   "short_name": "Remédios",
+  "description": "Controle de medicamentos com lembretes",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8f8ff",
-  "theme_color": "#6a0dad",
+  "background_color": "#080012",
+  "theme_color": "#080012",
+  "orientation": "portrait-primary",
+  "categories": ["health", "medical"],
   "icons": [
-    {"src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml"},
-    {"src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml"}
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any maskable" },
+    { "src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
